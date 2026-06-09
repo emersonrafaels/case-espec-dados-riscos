@@ -325,4 +325,5 @@ data/*.txt
 
 # Configurações locais com credenciais — nunca commitar
 src/config/settings.toml
+src/config/.secrets.toml
 .secrets.toml

@@ -15,13 +15,30 @@ except ImportError:
     import tomli as tomllib  # pip install tomli  (Python < 3.11)
 
 _SETTINGS_PATH = Path(__file__).parent / "settings.toml"
+_SECRETS_PATH  = Path(__file__).parent / ".secrets.toml"
 
 
 @lru_cache(maxsize=1)
 def get_config() -> dict[str, Any]:
-    """Return the merged configuration (file values overridden by env vars)."""
+    """Return the merged configuration (file values overridden by env vars).
+
+    Load order (later sources win):
+      1. settings.toml  — non-sensitive defaults
+      2. .secrets.toml  — credentials (gitignored)
+      3. environment variables
+    """
     with open(_SETTINGS_PATH, "rb") as fh:
         cfg = tomllib.load(fh)
+
+    # Merge .secrets.toml on top of settings.toml (if it exists)
+    if _SECRETS_PATH.exists():
+        with open(_SECRETS_PATH, "rb") as fh:
+            secrets = tomllib.load(fh)
+        for section, values in secrets.items():
+            if section in cfg and isinstance(values, dict):
+                cfg[section].update(values)
+            else:
+                cfg[section] = values
 
     ia  = cfg["ia"]
     ath = cfg["athena"]
