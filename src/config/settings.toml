@@ -1,0 +1,54 @@
+# =============================================================================
+#  Chat — Obsolescência de Servidores  |  settings.toml
+#  Todas as configurações do chat em um único arquivo.
+#
+#  Credenciais sensíveis: preencha aqui OU use variáveis de ambiente
+#  (a variável de ambiente tem precedência sobre o valor do arquivo).
+# =============================================================================
+
+# ── Aplicação Streamlit ───────────────────────────────────────────────────────
+[app]
+title  = "Chat | Obsolescência de Servidores"
+icon   = "🖥️"
+layout = "wide"          # "wide" | "centered"
+
+# ── Agente de IA (IARA) ───────────────────────────────────────────────────────
+[ia]
+# Provider: "openai" para uso externo (API key),
+#           "azure_openai" | "bedrock" | "vertex" para ambiente interno Itaú.
+provider    = "openai"
+model       = "gpt-5.2"
+temperature = 0.7
+
+# Credenciais — definidas em src/config/.secrets.toml (nunca commitar).
+# Alternativa: variáveis de ambiente (têm precedência sobre .secrets.toml).
+# OpenAI (provider = "openai"):
+api_key = ""   # env: OPENAI_API_KEY  |  .secrets.toml [ia] api_key
+
+# Itaú / IARA (provider = "azure_openai" | "bedrock" | "vertex"):
+client_id     = ""   # env: IARA_CLIENT_ID     |  .secrets.toml [ia] client_id
+client_secret = ""   # env: IARA_CLIENT_SECRET |  .secrets.toml [ia] client_secret
+
+# ── AWS Athena ────────────────────────────────────────────────────────────────
+[athena]
+region        = "us-east-1"
+s3_output     = "s3://workspace-db-case-espec-dados-riscos/athena-results/"           # s3://bucket/prefix/  |  env: ATHENA_S3_OUTPUT
+workgroup     = "primary"    # workgroup do Athena; env: ATHENA_WORKGROUP
+database      = "workspace_db_case_espec_dados_riscos"
+table         = "gold_obsolescencia_por_servidor"
+
+# Partição
+partition_col     = "ano_mes"   # coluna de partição da tabela; env: ATHENA_PARTITION_COL
+default_partition = "202604"    # valor padrão exibido no seletor de partições
+
+# Limite de linhas
+limit_min     = 10      # mínimo do slider
+limit_max     = 10000   # máximo do slider  (acima do máximo = sem limite)
+limit_default = 100     # valor inicial do slider
+
+# Credenciais AWS — definidas em src/config/.secrets.toml (nunca commitar).
+# Alternativa: variáveis de ambiente (têm precedência sobre .secrets.toml).
+aws_access_key_id     = ""   # env: AWS_ACCESS_KEY_ID     |  .secrets.toml [athena] aws_access_key_id
+aws_secret_access_key = ""   # env: AWS_SECRET_ACCESS_KEY |  .secrets.toml [athena] aws_secret_access_key
+aws_session_token     = ""   # env: AWS_SESSION_TOKEN     |  .secrets.toml [athena] aws_session_token
+profile               = "case-riscos"   # perfil local ~/.aws/credentials (opcional)
