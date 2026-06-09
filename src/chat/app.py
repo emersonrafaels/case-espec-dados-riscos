@@ -85,31 +85,51 @@ def _cached_query(_athena: AthenaClient, sql: str) -> pd.DataFrame:
     return _athena.query(sql)
 
 
-_PROMPT_MAX_ROWS = 300
+_PROMPT_SAMPLE_ROWS = 50   # raw rows sent only for row-structure context
 
 
 def _build_system_prompt(df: pd.DataFrame, table: str, is_sample: bool = True) -> str:
     n    = len(df)
     cols = "\n".join(f"  - `{c}` ({df[c].dtype})" for c in df.columns)
 
-    # Limit literal rows sent to the LLM — avoids token explosion with large datasets
-    sample    = df.head(_PROMPT_MAX_ROWS)
-    sample_md = sample.to_markdown(index=False) if not sample.empty else "_(vazio)_"
-    stats_md  = df.describe(include="all").fillna("").to_markdown() if not df.empty else ""
+    # Full value_counts per categorical column → AI has exact same numbers as charts
+    cat_sections: list[str] = []
+    for c in df.columns:
+        if pd.api.types.is_numeric_dtype(df[c]):
+            continue
+        vc       = df[c].value_counts(dropna=False).head(30)
+        n_unique = df[c].nunique()
+        tbl      = (
+            vc.reset_index()
+              .rename(columns={"index": "valor", c: "valor", "count": "qtd"})
+        )
+        # pandas ≥ 2.0 returns value_counts with the col name; ensure cols are named
+        tbl.columns = ["valor", "qtd"]
+        cat_sections.append(
+            f"### {c}  ({n_unique:,} valores únicos — top {len(vc)})\n"
+            + tbl.to_markdown(index=False)
+        )
+    cats_md  = "\n\n".join(cat_sections) if cat_sections else "_(sem colunas categoricas)_"
+
+    # Numeric summary
+    num_df   = df.select_dtypes(include="number")
+    stats_md = num_df.describe().fillna("").to_markdown() if not num_df.empty else ""
+
+    # Small raw sample — only to illustrate row structure
+    sample_md = df.head(_PROMPT_SAMPLE_ROWS).to_markdown(index=False) if not df.empty else "_(vazio)_"
 
     if is_sample:
         data_header    = f"## Dados carregados (amostra — {n:,} registros)"
         data_directive = (
-            "- Os dados acima são uma **amostra** da tabela. "
-            "Se a pergunta exigir análise do dataset completo, informe claramente "
-            "e sugira uma query SQL específica para obtê-los no Athena."
+            "- Os dados representam uma **amostra** da tabela. "
+            "Se necessário, sugira uma query SQL para análise do dataset completo no Athena."
         )
     else:
         data_header    = f"## Dados carregados — dataset completo ({n:,} registros)"
         data_directive = (
-            "- Os dados acima representam o **dataset completo** da tabela. "
-            "Responda diretamente com base neles. "
-            "**Não sugira queries SQL para obter mais dados** — eles já estão todos carregados."
+            "- Os dados representam o **dataset completo**. "
+            "Responda diretamente com base nos totais acima. "
+            "**Não sugira queries SQL para obter mais dados.**"
         )
 
     return f"""Você é um assistente analítico especializado em **obsolescência de servidores** do Itaú Unibanco.
@@ -121,16 +141,19 @@ Você tem acesso a dados da tabela `{table}` no AWS Athena \
 {cols}
 
 {data_header}
-> Exibindo os primeiros {min(n, _PROMPT_MAX_ROWS):,} registros como contexto.
 
-{sample_md}
+## Distribuição por coluna (contagens sobre todos os {n:,} registros)
+{cats_md}
 
-## Resumo estatístico
+## Resumo estatístico numérico
 {stats_md}
+
+## Amostra estrutural (primeiras {_PROMPT_SAMPLE_ROWS} linhas)
+{sample_md}
 
 **Diretrizes:**
 - Responda sempre em **português brasileiro**.
-- Baseie suas análises nos dados e no resumo estatístico acima; não invente valores.
+- Use os totais da seção "Distribuição por coluna" para responder perguntas de contagem/proporção — esses valores refletem **todos** os {n:,} registros carregados.
 - Use tabelas markdown e números formatados quando útil.
 {data_directive}
 - Seja objetivo, analítico e preciso.
