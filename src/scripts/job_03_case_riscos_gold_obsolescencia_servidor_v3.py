@@ -93,12 +93,17 @@ def contains_col(left_col, right_col):
     """
     Verifica se uma coluna contém outra coluna.
     Exige tamanho mínimo para reduzir falso positivo em matches por substring.
+
+    F.instr(str, substr) exige que substr seja um literal Python — não uma Column.
+    Usamos F.expr() com a representação SQL de cada coluna para contornar essa limitação.
     """
+    left_sql = left_col._jc.toString()
+    right_sql = right_col._jc.toString()
     return (
         left_col.isNotNull()
         & right_col.isNotNull()
         & (F.length(right_col) >= F.lit(MIN_CHARS_MATCH_CONTEM))
-        & (F.instr(left_col, right_col) > 0)
+        & F.expr(f"instr({left_sql}, {right_sql}) > 0")
     )
 
 
