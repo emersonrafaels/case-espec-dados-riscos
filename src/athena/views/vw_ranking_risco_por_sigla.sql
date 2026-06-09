@@ -1,4 +1,4 @@
-CREATE OR REPLACE VIEW workspace_db_case_espec_dados_riscos.vw_ranking_risco_por_sigla AS
+CREATE OR REPLACE VIEW workspace_db.case_riscos_vw_ranking_risco_por_sigla AS
 SELECT
     sigla,
     qtd_produtos_tecnologicos,
@@ -15,5 +15,5 @@ SELECT
     media_softwares_por_servidor,
     score_risco_operacional,
     classificacao_risco
-FROM workspace_db_case_espec_dados_riscos.gold_risco_tecnologico_por_sigla
+FROM workspace_db.case_riscos_gold_risco_tecnologico_por_sigla
 ORDER BY score_risco_operacional DESC;

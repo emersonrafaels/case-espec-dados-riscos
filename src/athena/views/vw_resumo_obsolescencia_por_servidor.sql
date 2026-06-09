@@ -1,4 +1,4 @@
-CREATE OR REPLACE VIEW workspace_db_case_espec_dados_riscos.vw_resumo_obsolescencia_por_servidor AS
+CREATE OR REPLACE VIEW workspace_db.case_riscos_vw_resumo_obsolescencia_por_servidor AS
 SELECT
     sigla_origem,
 
@@ -26,6 +26,6 @@ SELECT
         END
     ) AS qtd_impactos_criticos
 
-FROM workspace_db_case_espec_dados_riscos.gold_obsolescencia_por_servidor
+FROM workspace_db.case_riscos_gold_obsolescencia_por_servidor
 
 GROUP BY sigla_origem;
