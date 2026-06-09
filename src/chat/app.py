@@ -175,7 +175,7 @@ def _render_charts(df: pd.DataFrame) -> None:
 
     cat_cols = [
         c for c in df.columns
-        if str(df[c].dtype) in ("category", "object") and 1 < df[c].nunique() <= 100
+        if str(df[c].dtype) in ("category", "object") and df[c].nunique() > 1
     ]
     num_cols = df.select_dtypes(include="number").columns.tolist()
 
