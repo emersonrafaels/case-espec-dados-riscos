@@ -108,7 +108,8 @@ def _make_agent(
     provider: str, api_key: str, client_id: str, client_secret: str,
     model: str, temperature: float, system_prompt: str = "",
 ) -> IaraAgentChat:
-    get_iara_config.cache_clear()
+    if hasattr(get_iara_config, "cache_clear"):
+        get_iara_config.cache_clear()
     return IaraAgentChat(
         provider=provider,
         api_key=api_key or None,
