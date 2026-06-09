@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Case Executivo | Risco Tecnológico por Servidor</title>
+  <style>
+    :root{
+      --orange:#F66B00; --orange-2:#FF8A2A; --blue:#0B2E7A; --navy:#061B45;
+      --green:#149647; --yellow:#F4B000; --red:#C62828;
+      --bg:#F4F6FB; --card:#FFFFFF; --soft:#F8FAFF; --line:#D8E2F5;
+      --text:#10213F; --muted:#53627D; --muted-2:#7A89A6;
+      --shadow:0 22px 60px rgba(6,27,69,.12); --shadow-soft:0 14px 34px rgba(6,27,69,.08);
+      --radius:26px;
+    }
+    html[data-theme="dark"]{
+      --bg:#06152E; --card:#0B2248; --soft:#081A39; --line:#23406F;
+      --text:#F5F8FF; --muted:#D4E0F7; --muted-2:#9FB2D4;
+      --shadow:0 22px 60px rgba(0,0,0,.30); --shadow-soft:0 14px 34px rgba(0,0,0,.22);
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;width:100%;height:100%;font-family:"Aptos Display", "Aptos", "Segoe UI Variable", "Segoe UI", Roboto, Arial, Helvetica, sans-serif;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;background:var(--bg);color:var(--text);overflow:hidden}
+    button{font-family:inherit}.deck{width:100vw;height:100vh;position:relative;overflow:hidden}.slide{position:absolute;inset:0;padding:40px 56px 106px;display:flex;flex-direction:column;gap:18px;background:linear-gradient(180deg,var(--card) 0%,rgba(255,255,255,.92) 100%);opacity:0;transform:translateX(32px) scale(.985);pointer-events:none;transition:opacity .45s ease,transform .45s cubic-bezier(.2,.9,.2,1);overflow:auto}.slide.active{opacity:1;transform:translateX(0) scale(1);pointer-events:auto}.slide.exit-left{opacity:0;transform:translateX(-32px) scale(.985)}html[data-theme="dark"] .slide{background:linear-gradient(180deg,#0B2248 0%,#081A39 100%)}.slide::before{content:"";position:absolute;right:-220px;bottom:-270px;width:600px;height:600px;border-radius:50%;background:radial-gradient(circle,rgba(246,107,0,.20),transparent 64%);pointer-events:none}.slide::after{content:"";position:absolute;left:-270px;top:-270px;width:560px;height:560px;border-radius:50%;background:radial-gradient(circle,rgba(11,46,122,.12),transparent 66%);pointer-events:none}.top,.content,.footer-callout{position:relative;z-index:1}.top{display:flex;align-items:flex-start;justify-content:space-between;gap:24px;padding-right:58px}.eyebrow{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;background:#FFF1E7;border:1px solid #FFD4AF;color:var(--orange);font-size:11px;font-weight:950;text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px}html[data-theme="dark"] .eyebrow{background:#39271A;border-color:#A86736;color:#FFD4AF}h1{margin:0;color:var(--blue);max-width:1120px;font-size:clamp(34px,3.3vw,48px);line-height:1.02;letter-spacing:-.045em}html[data-theme="dark"] h1{color:#F5F8FF}.subtitle{margin:10px 0 0;max-width:1060px;color:var(--muted);font-size:clamp(15px,1.25vw,18px);line-height:1.38;font-weight:650}.brand{min-width:82px;height:60px;display:grid;place-items:center;padding:0;flex:0 0 auto;margin-top:2px;background:transparent;border:0;box-shadow:none}.brand img{width:72px;height:auto;display:block;object-fit:contain}.content{flex:1;min-height:0;display:grid;grid-template-columns:1.05fr .95fr;gap:18px}.content.one{grid-template-columns:1fr}.content.three{grid-template-columns:repeat(3,1fr)}.content.wide-left{grid-template-columns:1.2fr .8fr}.panel{border:1px solid var(--line);border-radius:var(--radius);background:rgba(255,255,255,.78);padding:20px;box-shadow:var(--shadow-soft);display:flex;flex-direction:column;gap:14px;min-height:0}html[data-theme="dark"] .panel{background:rgba(255,255,255,.045)}.panel-title{color:var(--orange);font-weight:950;font-size:12px;text-transform:uppercase;letter-spacing:.07em}.big-number{font-size:clamp(46px,5vw,74px);line-height:.92;font-weight:950;letter-spacing:-.07em;color:var(--orange)}.big-caption{color:var(--muted);font-size:17px;line-height:1.42;font-weight:650}.quote{border-left:5px solid var(--orange);background:#FFF8F2;border-radius:18px;padding:16px 18px;color:var(--blue);font-size:20px;line-height:1.32;font-weight:850}html[data-theme="dark"] .quote{background:rgba(246,107,0,.10);color:#F5F8FF}.kpi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:auto}.kpi{border:1px solid var(--line);border-radius:18px;background:var(--card);padding:14px}.kpi .label{font-size:10px;color:var(--muted);font-weight:900;text-transform:uppercase;letter-spacing:.05em}.kpi strong{display:block;margin-top:7px;color:var(--blue);font-size:22px;line-height:1.05}html[data-theme="dark"] .kpi strong{color:#F5F8FF}.story-list{display:grid;gap:10px;overflow:auto}.story-item{display:grid;grid-template-columns:40px 1fr;gap:12px;border:1px solid var(--line);border-radius:18px;background:var(--card);padding:13px}.num,.icon-chip{width:40px;height:40px;border-radius:13px;display:grid;place-items:center;background:#FFF1E7;color:var(--orange);font-weight:950}.story-item b{display:block;color:var(--blue);font-size:15px;margin-bottom:4px}html[data-theme="dark"] .story-item b{color:#F5F8FF}.story-item span{color:var(--muted);font-size:13px;line-height:1.38;font-weight:650}.footer-callout{display:flex;gap:12px;align-items:flex-start;border:1px solid #FFD4AF;border-radius:20px;background:#FFF8F2;padding:13px 16px;color:var(--blue)}html[data-theme="dark"] .footer-callout{background:rgba(246,107,0,.10);border-color:#A86736;color:#F5F8FF}.footer-callout .icon{width:34px;height:34px;border-radius:50%;background:var(--orange);color:#fff;display:grid;place-items:center;font-weight:950;flex:0 0 auto}.footer-callout b{display:block;font-size:14px;margin-bottom:3px}.footer-callout span{display:block;color:var(--muted);font-size:13px;line-height:1.35;font-weight:650}.flow-grid{display:grid;grid-template-columns:1fr 70px 1fr;gap:14px;align-items:center;height:100%}.flow-col{display:grid;gap:10px}.flow-card{border:1px solid var(--line);background:var(--card);border-radius:18px;padding:15px;text-align:center;font-weight:950;color:var(--blue);box-shadow:var(--shadow-soft)}.flow-card.bad{border-color:#F4B7B7;background:#FFF7F7;color:var(--red)}html[data-theme="dark"] .flow-card{color:#F5F8FF}html[data-theme="dark"] .flow-card.bad{background:rgba(198,40,40,.14);color:#FFD4D4}.arrow-circle{width:54px;height:54px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,var(--orange),var(--orange-2));color:#fff;font-size:28px;font-weight:950;margin:auto;box-shadow:0 12px 26px rgba(246,107,0,.25)}.architecture{display:grid;grid-template-columns:1fr 66px 1fr 66px 1fr;gap:12px;align-items:center;height:100%}.arch-col{display:grid;gap:12px}.aws{border:1px solid var(--line);border-radius:20px;background:var(--card);padding:16px;display:grid;gap:6px;box-shadow:var(--shadow-soft)}.aws .svc{font-size:10px;color:var(--muted);font-weight:950;text-transform:uppercase;letter-spacing:.06em}.aws b{font-size:20px;color:var(--blue)}html[data-theme="dark"] .aws b{color:#F5F8FF}.aws span{font-size:13px;color:var(--muted);line-height:1.35;font-weight:650}.arrow-step{display:grid;place-items:center;color:#fff;background:linear-gradient(135deg,var(--orange),var(--orange-2));width:48px;height:48px;border-radius:50%;font-weight:950;font-size:24px}.gold-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.gold-card{border:1px solid var(--line);border-radius:20px;background:var(--card);padding:15px;display:flex;flex-direction:column;gap:10px;box-shadow:var(--shadow-soft)}.gold-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}.gold-name{font-size:15px;line-height:1.15;font-weight:950;color:var(--blue)}html[data-theme="dark"] .gold-name{color:#F5F8FF}.pill{padding:6px 9px;border-radius:999px;background:#FFF1E7;border:1px solid #FFD4AF;color:var(--orange);font-size:10px;font-weight:950;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap}.gold-desc,.mini{color:var(--muted);font-size:12px;line-height:1.35;font-weight:650}.code,.arch-tree{font-family:"SFMono-Regular",Consolas,monospace;background:#071A36;color:#DFF4FF;border:1px solid #163967;border-radius:18px;padding:15px;line-height:1.42;font-size:12px;white-space:pre-wrap;overflow:auto}.table{width:100%;border-collapse:separate;border-spacing:0 9px}.table th{text-align:left;color:var(--orange);font-size:10px;text-transform:uppercase;letter-spacing:.06em;padding:0 10px}.table td{background:var(--card);border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:12px 10px;color:var(--muted);font-weight:700;font-size:13px}.table td:first-child{border-left:1px solid var(--line);border-radius:14px 0 0 14px;color:var(--blue);font-weight:950}.table td:last-child{border-right:1px solid var(--line);border-radius:0 14px 14px 0}.tag-row{display:flex;flex-wrap:wrap;gap:8px}.tag{padding:8px 11px;border-radius:999px;background:#FFF1E7;border:1px solid #FFD4AF;color:var(--orange);font-weight:950;font-size:11px}.controls{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:30;display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.9);border:1px solid var(--line);box-shadow:var(--shadow);border-radius:999px;padding:7px 9px;backdrop-filter:blur(10px)}html[data-theme="dark"] .controls{background:rgba(8,26,57,.84)}.nav-btn{width:38px;height:38px;border-radius:50%;border:0;background:var(--blue);color:#fff;font-size:18px;cursor:pointer;font-weight:900}.nav-btn:disabled{opacity:.35}.small-btn{height:38px;border:0;border-radius:999px;padding:0 14px;background:#FFF1E7;color:var(--orange);font-weight:950;cursor:pointer}.count{font-size:13px;font-weight:950;color:var(--muted);min-width:58px;text-align:center}.theme-toggle{position:fixed;top:18px;right:18px;z-index:40;width:44px;height:44px;border-radius:50%;border:1px solid var(--line);background:var(--card);color:var(--orange);cursor:pointer;box-shadow:var(--shadow);font-size:20px}.progress{position:fixed;left:0;right:0;bottom:0;height:5px;background:rgba(83,98,125,.16);z-index:35}.progress span{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--orange),var(--orange-2));transition:width .35s ease}.two-metric{display:grid;grid-template-columns:1fr 1fr;gap:12px}.metric{border:1px solid var(--line);border-radius:18px;background:var(--card);padding:14px;display:flex;align-items:center;justify-content:space-between;gap:12px}.metric span{color:var(--muted);font-size:11px;font-weight:950;text-transform:uppercase;letter-spacing:.05em}.metric b{color:var(--orange);font-size:28px}.farol{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.farol-card{border:1px solid var(--line);border-radius:18px;background:var(--card);padding:14px;text-align:center}.dot{width:18px;height:18px;border-radius:50%;margin:0 auto 8px}.dot.green{background:var(--green)}.dot.yellow{background:var(--yellow)}.dot.red{background:var(--red)}.farol-card b{display:block;color:var(--blue);font-size:16px}.farol-card span{display:block;color:var(--muted);font-size:12px;margin-top:4px;font-weight:700}.speaker{font-size:12px;color:var(--muted-2);font-weight:700;border-top:1px dashed var(--line);padding-top:10px;margin-top:auto}.slide::-webkit-scrollbar{width:8px}.slide::-webkit-scrollbar-thumb{background:rgba(83,98,125,.35);border-radius:999px}
+    .chatbot-shell{display:grid;grid-template-columns:1fr 1.1fr;gap:18px;align-items:stretch;height:100%}
+    .chat-window{border:1px solid var(--line);border-radius:26px;background:linear-gradient(180deg,var(--card),rgba(255,255,255,.76));box-shadow:var(--shadow-soft);padding:18px;display:flex;flex-direction:column;gap:12px;min-height:0}
+    html[data-theme="dark"] .chat-window{background:rgba(255,255,255,.04)}
+    .chat-header{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);padding-bottom:12px}
+    .chat-agent{display:flex;align-items:center;gap:10px;font-weight:950;color:var(--blue)}
+    html[data-theme="dark"] .chat-agent{color:#F5F8FF}
+    .bot-avatar{width:38px;height:38px;border-radius:14px;background:linear-gradient(135deg,var(--orange),var(--orange-2));color:#fff;display:grid;place-items:center;font-weight:950}
+    .status-dot{display:inline-flex;align-items:center;gap:7px;color:var(--muted);font-size:12px;font-weight:850}.status-dot::before{content:"";width:9px;height:9px;border-radius:50%;background:var(--green);display:block}
+    .chat-messages{display:grid;gap:10px;overflow:auto;padding-right:4px}
+    .bubble{max-width:88%;border:1px solid var(--line);border-radius:18px;padding:12px 14px;font-size:13px;line-height:1.4;font-weight:650;color:var(--muted);background:var(--card)}
+    .bubble.user{justify-self:end;background:#FFF1E7;border-color:#FFD4AF;color:var(--blue)}
+    html[data-theme="dark"] .bubble.user{background:#39271A;color:#F5F8FF;border-color:#A86736}
+    .bubble.bot{justify-self:start}.bubble b{display:block;color:var(--blue);margin-bottom:4px}html[data-theme="dark"] .bubble b{color:#F5F8FF}
+    .prompt-bar{margin-top:auto;border:1px solid var(--line);border-radius:999px;background:var(--card);padding:10px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;color:var(--muted);font-size:12px;font-weight:800}.send-dot{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;background:var(--orange);color:#fff;font-weight:950;flex:0 0 auto}
+    .genai-stack{display:grid;gap:12px}.genai-card{border:1px solid var(--line);border-radius:20px;background:var(--card);padding:15px;display:grid;grid-template-columns:42px 1fr;gap:12px;align-items:start;box-shadow:var(--shadow-soft)}html[data-theme="dark"] .genai-card{background:rgba(255,255,255,.04)}.genai-card b{display:block;color:var(--blue);font-size:15px;margin-bottom:4px}html[data-theme="dark"] .genai-card b{color:#F5F8FF}.genai-card span{display:block;color:var(--muted);font-size:13px;line-height:1.38;font-weight:650}
+    .iara-badge{display:inline-flex;align-items:center;gap:8px;width:max-content;padding:8px 12px;border-radius:999px;background:#FFF1E7;border:1px solid #FFD4AF;color:var(--orange);font-weight:950;font-size:11px;text-transform:uppercase;letter-spacing:.05em}
+    html[data-theme="dark"] .iara-badge{background:#39271A;border-color:#A86736;color:#FFD4AF}
+
+@media print{body{overflow:visible}.slide{position:relative;opacity:1;transform:none;page-break-after:always;height:100vh}.controls,.theme-toggle,.progress{display:none}}@media(max-width:1100px){html,body{overflow:auto}.slide{padding:28px 18px 98px;overflow:auto}.content,.content.three,.content.wide-left,.gold-grid,.flow-grid,.architecture,.two-metric,.farol{grid-template-columns:1fr}.arrow-circle,.arrow-step{transform:rotate(90deg)}.brand{display:none}.controls{left:50%;right:auto;bottom:12px}.kpi-grid{grid-template-columns:1fr}h1{font-size:34px}}
+
+    /* Diagrama visual de relacionamento entre tabelas */
+    .lineage-wrap{display:grid;grid-template-columns:1fr 1.08fr 1fr;gap:18px;align-items:stretch;height:100%}
+    .lineage-col{display:flex;flex-direction:column;gap:12px;justify-content:center}
+    .lineage-card{position:relative;border:1px solid var(--line);border-radius:20px;background:var(--card);box-shadow:var(--shadow-soft);padding:14px 15px;min-height:106px;display:flex;flex-direction:column;gap:8px}
+    .lineage-card.primary{border-color:#FFD4AF;background:#FFF8F2}
+    html[data-theme="dark"] .lineage-card.primary{background:rgba(246,107,0,.10);border-color:#A86736}
+    .lineage-kicker{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--orange);font-weight:950}
+    .lineage-title{font-size:16px;line-height:1.12;color:var(--blue);font-weight:950}
+    html[data-theme="dark"] .lineage-title{color:#F5F8FF}
+    .lineage-fields{font-size:11px;line-height:1.35;color:var(--muted);font-weight:700}
+    .join-badge{align-self:flex-start;border-radius:999px;background:#FFF1E7;border:1px solid #FFD4AF;color:var(--orange);padding:6px 9px;font-size:10px;font-weight:950;white-space:nowrap}
+    .lineage-center{display:grid;grid-template-rows:auto 1fr auto;gap:12px;align-items:center}
+    .join-rule{border:1px dashed #FFB16B;background:rgba(255,241,231,.8);border-radius:18px;padding:11px 12px;text-align:center;color:var(--blue);font-size:12px;font-weight:850;line-height:1.35}
+    html[data-theme="dark"] .join-rule{background:rgba(246,107,0,.10);color:#F5F8FF}
+    .flow-lines{position:relative;min-height:220px;display:grid;place-items:center}
+    .flow-lines svg{width:100%;height:100%;min-height:220px;overflow:visible}
+    .flow-lines text{font-family:inherit;font-size:11px;font-weight:900;fill:var(--muted)}
+    .flow-lines .path{stroke:var(--orange);stroke-width:4;fill:none;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 8px 8px rgba(246,107,0,.18))}
+    .flow-lines .path.secondary{stroke:var(--blue);stroke-width:3;opacity:.7;stroke-dasharray:6 6;filter:none}
+    .output-stack{display:grid;gap:12px}
+    .output-card{border:1px solid var(--line);border-radius:20px;background:linear-gradient(180deg,#fff,#F8FAFF);box-shadow:var(--shadow-soft);padding:16px;display:grid;gap:7px}
+    html[data-theme="dark"] .output-card{background:rgba(255,255,255,.045)}
+    .output-card b{font-size:17px;color:var(--blue)}
+    html[data-theme="dark"] .output-card b{color:#F5F8FF}
+    .output-card span{font-size:12px;color:var(--muted);font-weight:700;line-height:1.35}
+    .mini-step{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:12px;font-weight:800}
+    .mini-step i{width:22px;height:22px;border-radius:999px;background:var(--orange);color:#fff;display:grid;place-items:center;font-style:normal;font-size:12px;font-weight:950;flex:0 0 auto}
+  
+.model-chain{display:grid;grid-template-columns:1fr 44px 1fr 44px 1fr;gap:12px;align-items:stretch}.model-box{border:1px solid var(--line);border-radius:20px;background:var(--card);padding:16px;box-shadow:var(--shadow-soft);display:flex;flex-direction:column;gap:10px}.model-box.primary{border-color:#FFD4AF;background:#FFF8F2}.model-kicker{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--orange);font-weight:950}.model-title{font-size:17px;font-weight:950;color:var(--blue);line-height:1.15}.model-fields{font-size:12px;line-height:1.35;color:var(--muted);font-weight:700}.model-rule{margin-top:auto;border-radius:14px;background:#FFF1E7;border:1px solid #FFD4AF;padding:10px;color:var(--orange);font-size:11px;font-weight:950}.model-arrow{display:grid;place-items:center;color:#fff;background:linear-gradient(135deg,var(--orange),var(--orange-2));width:38px;height:38px;border-radius:50%;font-weight:950;font-size:20px;margin:auto}.model-enrich{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}.model-output{margin-top:12px;border:1px solid var(--line);border-radius:20px;background:linear-gradient(135deg,#fff,#FFF8F2);padding:15px;display:flex;align-items:center;justify-content:space-between;gap:14px}.model-output b{color:var(--blue);font-size:18px}.model-output span{color:var(--muted);font-size:13px;font-weight:700}.source-row{cursor:pointer;transition:transform .16s ease,box-shadow .16s ease}.source-row:hover td{background:#FFF8F2}.source-row td:first-child::after{content:'  ↗';color:var(--orange);font-weight:950}.source-hint{font-size:11px;color:var(--orange);font-weight:950;margin-top:4px}html[data-theme='dark'] .source-row:hover td{background:rgba(246,107,0,.10)}.gold-card.clickable{cursor:pointer;transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease}.gold-card.clickable:hover{transform:translateY(-3px);border-color:#FFB36D;box-shadow:0 18px 42px rgba(246,107,0,.16)}.click-hint{font-size:11px;color:var(--orange);font-weight:950;margin-top:auto}.modal-backdrop{position:fixed;inset:0;z-index:90;background:rgba(5,18,40,.58);display:none;align-items:center;justify-content:center;padding:24px}.modal-backdrop.open{display:flex}.modal{width:min(760px,94vw);max-height:84vh;overflow:auto;border-radius:24px;background:var(--card);border:1px solid var(--line);box-shadow:0 28px 80px rgba(0,0,0,.28);padding:22px}.modal-head{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;margin-bottom:14px}.modal-title{font-size:24px;line-height:1.1;font-weight:950;color:var(--blue)}.modal-close{border:0;background:#FFF1E7;color:var(--orange);font-weight:950;border-radius:999px;width:36px;height:36px;cursor:pointer}.modal-body{display:grid;gap:12px}.modal-section{border:1px solid var(--line);border-radius:18px;padding:14px;background:#FFF8F2}.modal-section b{display:block;color:var(--orange);font-size:11px;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}.modal-section span{display:block;color:var(--muted);font-size:14px;line-height:1.45;font-weight:700}html[data-theme="dark"] .model-box.primary,html[data-theme="dark"] .model-output,html[data-theme="dark"] .modal-section{background:rgba(246,107,0,.10)}html[data-theme="dark"] .model-title,html[data-theme="dark"] .model-output b,html[data-theme="dark"] .modal-title{color:#F5F8FF}@media(max-width:1100px){.model-chain,.model-enrich{grid-template-columns:1fr}.model-arrow{transform:rotate(90deg)}}
+</style>
+</head>
+<body>
+  <button class="theme-toggle" id="themeToggle" title="Alternar tema">☀</button>
+  <main class="deck">
+
+    <section class="slide active">
+      <div class="top"><div><div class="eyebrow">Emerson Rafael • Case técnico • Slide 01</div><h1>Risco tecnológico: da visão por sigla para a remediação por servidor</h1><p class="subtitle">Solução em AWS para transformar bases técnicas de CMDB, inventário e obsolescência em um produto de dados acionável para OpRisk, tecnologia e times de remediação.</p></div><div class="brand"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/19/Ita%C3%BA_Unibanco_logo_2023.svg/250px-Ita%C3%BA_Unibanco_logo_2023.svg.png" alt="Itaú Unibanco"></div></div>
+      <div class="content">
+        <div class="panel"><div class="panel-title">Tese executiva</div><div class="big-number">Sigla → Servidor</div><div class="big-caption">O principal valor do case é trocar a unidade de controle. A sigla mostra o risco, mas a correção acontece no servidor, software e versão.</div><div class="kpi-grid"><div class="kpi"><div class="label">Visão estratégica</div><strong>por Sigla</strong></div><div class="kpi"><div class="label">Visão operacional</div><strong>por Servidor</strong></div><div class="kpi"><div class="label">Snapshot</div><strong>202604</strong></div></div></div>
+        <div class="panel"><div class="panel-title">Síntese executiva</div><div class="quote">“O problema central do controle atual é que a unidade de análise está na Sigla de Sistema, enquanto a remediação ocorre no Servidor. Isso gera perda de rastreabilidade, dificuldade de priorização e mensuração limitada da evolução da remediação.”</div><div class="story-list"><div class="story-item"><div class="num">1</div><div><b>Rastreabilidade</b><span>Servidor → software → versão → obsolescência.</span></div></div><div class="story-item"><div class="num">2</div><div><b>Priorização</b><span>Ranking por sigla e por servidor para decisão e execução.</span></div></div><div class="story-item"><div class="num">3</div><div><b>Conformidade</b><span>HUB Analítico final e percentual de inconformidades com farol.</span></div></div></div></div>
+      </div><div class="footer-callout"><div class="icon">!</div><div><b>Resumo executivo</b><span>A solução transforma dados técnicos dispersos em inteligência operacional para modernização tecnológica.</span></div></div>
+    </section>
+
+    <section class="slide">
+      <div class="top"><div><div class="eyebrow">Slide 02 • Problema</div><h1>O problema: a gestão vê a sigla, mas a remediação ocorre no servidor</h1><p class="subtitle">A granularidade original indicava riscos por aplicação/sigla, mas não mostrava claramente onde o time técnico deveria atuar.</p></div><div class="brand"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/19/Ita%C3%BA_Unibanco_logo_2023.svg/250px-Ita%C3%BA_Unibanco_logo_2023.svg.png" alt="Itaú Unibanco"></div></div>
+      <div class="content one"><div class="panel"><div class="flow-grid"><div class="flow-col"><div class="panel-title">Antes</div><div class="flow-card bad">Sigla</div><div class="flow-card bad">Produto tecnológico</div><div class="flow-card bad">Obsolescência</div><div class="big-caption">Boa para sinalizar risco, fraca para orientar execução.</div></div><div class="arrow-circle">→</div><div class="flow-col"><div class="panel-title">Depois</div><div class="flow-card">Sigla</div><div class="flow-card">Servidor</div><div class="flow-card">Software</div><div class="flow-card">Versão</div><div class="flow-card">Obsolescência</div></div></div></div></div>
+      <div class="footer-callout"><div class="icon">→</div><div><b>Virada de chave</b><span>A entrega passa a apontar exatamente qual ativo precisa de remediação.</span></div></div>
+    </section>
+
+    <section class="slide">
+      <div class="top"><div><div class="eyebrow">Slide 03 • Fontes</div><h1>Fontes de dados utilizadas no case</h1><p class="subtitle">As bases foram organizadas para separar inventário, instalação, risco tecnológico e enriquecimento organizacional.</p></div><div class="brand"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/19/Ita%C3%BA_Unibanco_logo_2023.svg/250px-Ita%C3%BA_Unibanco_logo_2023.svg.png" alt="Itaú Unibanco"></div></div>
+      <div class="content one"><div class="panel"><table class="table"><thead><tr><th>Fonte</th><th>Papel no modelo</th><th>Campos-chave</th></tr></thead><tbody><tr class="source-row" data-modal="fonte_servidores"><td>servidores_siglas</td><td>Inventário de servidores e vínculo com a sigla</td><td>nome, sigla, arquitetura, ambiente</td></tr><tr class="source-row" data-modal="fonte_software_instance"><td>cmdb_software_instance_sot</td><td>CMDB: softwares instalados por servidor</td><td>installed_on, software</td></tr><tr class="source-row" data-modal="fonte_spkg"><td>cmdb_ci_spkg_sot</td><td>Catálogo tecnológico de software e versão</td><td>name, version, model_id</td></tr><tr class="source-row" data-modal="fonte_query1"><td>resultado_query1</td><td>Dimensão organizacional da sigla</td><td>diretoria, comunidade, criticidade_final</td></tr><tr class="source-row" data-modal="fonte_query2"><td>resultado_query2</td><td>Dimensão de produto/domínio</td><td>nome, pillar, domínio, subdomínio</td></tr><tr class="source-row" data-modal="fonte_query3"><td>resultado_query3</td><td>Base de obsolescência por sigla + produto</td><td>sigla_ss, produto, versão, rating, impacto, cloud</td></tr></tbody></table><div class="source-hint">Clique em uma fonte para ver o papel, a granularidade e como ela entra no join.</div></div></div>
+      <div class="footer-callout"><div class="icon">D</div><div><b>Modelagem</b><span>O enriquecimento das bases de resultado conecta a visão técnica à visão organizacional, preenchendo Diretoria, Comunidade e Criticidade/Tier da sigla para entregar o template final com rastreabilidade executiva e operacional.</span></div></div>
+    </section>
+
+    <section class="slide">
+      <div class="top"><div><div class="eyebrow">Slide 04 • Arquitetura AWS</div><h1>Arquitetura alvo: dados brutos preservados, consumo desacoplado</h1><p class="subtitle">A solução usa padrão medalhão para controlar ingestão, tratamento e saídas finais com governança.</p></div><div class="brand"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/19/Ita%C3%BA_Unibanco_logo_2023.svg/250px-Ita%C3%BA_Unibanco_logo_2023.svg.png" alt="Itaú Unibanco"></div></div>
+      <div class="content one"><div class="panel"><div class="architecture"><div class="arch-col"><div class="aws"><div class="svc">Entrada</div><b>Excel / CSV</b><span>Arquivos técnicos heterogêneos.</span></div><div class="aws"><div class="svc">S3</div><b>Bronze</b><span>Dado bruto, auditável e reprocessável.</span></div></div><div class="arrow-step">→</div><div class="arch-col"><div class="aws"><div class="svc">Glue Spark</div><b>Padronização</b><span>Conversão, normalização, metadados e Parquet.</span></div><div class="aws"><div class="svc">S3 + Catalog</div><b>Silver</b><span>Tabelas tratadas para Athena.</span></div></div><div class="arrow-step">→</div><div class="arch-col"><div class="aws"><div class="svc">Glue Spark + Athena</div><b>Gold</b><span>Regras analíticas, outputs e views.</span></div><div class="aws"><div class="svc">QuickSight</div><b>Consumo</b><span>Ranking, farol e acompanhamento executivo.</span></div></div></div></div></div>
+      <div class="footer-callout"><div class="icon">✓</div><div><b>Decisão técnica</b><span>Parquet + particionamento por ano_mes reduzem custo e preparam histórico incremental.</span></div></div>
+    </section>
+
+    <section class="slide">
+      <div class="top"><div><div class="eyebrow">Slide 05 • Pipeline</div><h1>Esteira implementada em Glue: quatro jobs com responsabilidades claras</h1><p class="subtitle">Cada job resolve uma etapa: ingestão, visão executiva, visão operacional e entrega final do case.</p></div><div class="brand"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/19/Ita%C3%BA_Unibanco_logo_2023.svg/250px-Ita%C3%BA_Unibanco_logo_2023.svg.png" alt="Itaú Unibanco"></div></div>
+      <div class="content one"><div class="panel"><pre class="arch-tree">job_01_case_riscos_bronze_to_silver_catalogacao
+  └─ Lê XLSX/CSV, padroniza colunas, grava Silver em Parquet e cataloga.
+
+job_02_case_riscos_silver_to_gold_modelagem
+  └─ Cria gold_risco_tecnologico_por_sigla para priorização executiva.
+
+job_03_case_riscos_gold_obsolescencia_por_servidor
+  └─ Cria gold_obsolescencia_por_servidor com granularidade operacional.
+
+job_04_case_riscos_gold_outputs_finais
+  └─ Cria gold_hub_analitico_por_servidor e gold_controle_inconformidades_por_servidor.</pre></div></div>
+      <div class="footer-callout"><div class="icon">4</div><div><b>Separação de responsabilidades</b><span>A solução fica mais fácil de explicar, testar, reprocessar e evoluir.</span></div></div>
+    </section>
+
+
+    <section class="slide">
+      <div class="top"><div><div class="eyebrow">Slide 06 • Modelo de dados</div><h1>Modelo de dados: como o risco chega até o servidor</h1><p class="subtitle">A lógica do modelo é simples: localizar o servidor, identificar o software instalado, conectar ao catálogo/versionamento e herdar os atributos de risco e organização.</p></div><div class="brand"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/19/Ita%C3%BA_Unibanco_logo_2023.svg/250px-Ita%C3%BA_Unibanco_logo_2023.svg.png" alt="Itaú Unibanco"></div></div>
+      <div class="content one">
+        <div class="panel">
+          <div class="model-chain">
+            <div class="model-box primary">
+              <div class="model-kicker">1. Onde atuar?</div>
+              <div class="model-title">servidores_siglas</div>
+              <div class="model-fields">Inventário de servidores com sigla de origem, arquitetura, ambiente e status operacional.</div>
+              <div class="model-rule">Chave: nome do servidor</div>
+            </div>
+            <div class="model-arrow">→</div>
+            <div class="model-box primary">
+              <div class="model-kicker">2. O que está instalado?</div>
+              <div class="model-title">cmdb_software_instance_sot</div>
+              <div class="model-fields">Lista os softwares instalados em cada servidor.</div>
+              <div class="model-rule">Join: servidores_siglas.nome = installed_on</div>
+            </div>
+            <div class="model-arrow">→</div>
+            <div class="model-box primary">
+              <div class="model-kicker">3. Qual o produto e a versão?</div>
+              <div class="model-title">cmdb_ci_spkg_sot</div>
+              <div class="model-fields">Catálogo tecnológico com nome, versão e identificador do produto.</div>
+              <div class="model-rule">Join: software instalado = name + version</div>
+            </div>
+          </div>
+
+          <div class="model-enrich">
+            <div class="model-box">
+              <div class="model-kicker">Enriquecimento de risco</div>
+              <div class="model-title">resultado_query3</div>
+              <div class="model-fields">Traz criticidade, índice de obsolescência, rating, impacto e cloud para o produto tecnológico/versionamento.</div>
+              <div class="model-rule">Resultado: risco por software/versão</div>
+            </div>
+            <div class="model-box">
+              <div class="model-kicker">Enriquecimento organizacional</div>
+              <div class="model-title">resultado_query1 + resultado_query2</div>
+              <div class="model-fields">Preenche Diretoria, Comunidade, Tier/Criticidade da Sigla, Pillar, Domínio e Subdomínio no template final.</div>
+              <div class="model-rule">Resultado: contexto de negócio</div>
+            </div>
+          </div>
+
+          <div class="model-output">
+            <div><b>Saída principal: gold_obsolescencia_por_servidor</b><span>Uma linha por servidor + software + versão + risco, pronta para gerar o HUB Analítico e o farol de inconformidade.</span></div>
+            <div class="pill">por_servidor</div>
+          </div>
+        </div>
+      </div>
+      <div class="footer-callout"><div class="icon">✓</div><div><b>Mensagem para a banca</b><span>O modelo resolve a lacuna entre diagnóstico e execução: sai da sigla, chega no servidor e mantém a rastreabilidade até o controle executivo.</span></div></div>
+    </section>
+    <section class="slide">
+      <div class="top"><div><div class="eyebrow">Slide 07 • Golds interativas</div><h1>Camada Gold: decisão por sigla, execução por servidor e outputs finais</h1><p class="subtitle">A camada Gold foi desenhada em dois níveis: estratégico e operacional.</p></div><div class="brand"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/19/Ita%C3%BA_Unibanco_logo_2023.svg/250px-Ita%C3%BA_Unibanco_logo_2023.svg.png" alt="Itaú Unibanco"></div></div>
+      <div class="content one"><div class="panel"><div class="gold-grid"><div class="gold-card clickable" data-modal="sigla"><div class="gold-top"><div class="gold-name">gold_risco_tecnologico_por_sigla</div><div class="pill">por_sigla</div></div><div class="gold-desc">Visão executiva de risco por aplicação/sigla.</div><div class="mini"><b>Pergunta:</b> quais sistemas priorizar?</div><div class="click-hint">Clique para ver cálculo e campos →</div></div><div class="gold-card clickable" data-modal="servidor"><div class="gold-top"><div class="gold-name">gold_obsolescencia_por_servidor</div><div class="pill">por_servidor</div></div><div class="gold-desc">Visão operacional com servidor, software, versão e obsolescência.</div><div class="mini"><b>Pergunta:</b> onde corrigir?</div><div class="click-hint">Clique para ver joins e granularidade →</div></div><div class="gold-card clickable" data-modal="hub"><div class="gold-top"><div class="gold-name">gold_hub_analitico_por_servidor</div><div class="pill">output</div></div><div class="gold-desc">Arquivo final no layout de 11 colunas exigido pelo case.</div><div class="mini"><b>Uso:</b> envio para HUB/OpRisk.</div><div class="click-hint">Clique para ver layout final →</div></div><div class="gold-card clickable" data-modal="farol"><div class="gold-top"><div class="gold-name">gold_controle_inconformidades_por_servidor</div><div class="pill">farol</div></div><div class="gold-desc">Percentual de inconformidade e farol regulatório.</div><div class="mini"><b>Uso:</b> acompanhamento executivo.</div><div class="click-hint">Clique para ver regra do farol →</div></div></div></div></div>
+      <div class="footer-callout"><div class="icon">G</div><div><b>Mensagem-chave</b><span>As Golds separam priorização estratégica, remediação operacional e evidência de controle.</span></div></div>
+    </section>
+
+    <section class="slide">
+      <div class="top"><div><div class="eyebrow">Slide 08 • Outputs finais</div><h1>Outputs finais: HUB Analítico e controle de inconformidades</h1><p class="subtitle">A entrega final combina o arquivo operacional no layout exigido e a leitura executiva de conformidade com farol.</p></div><div class="brand"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/19/Ita%C3%BA_Unibanco_logo_2023.svg/250px-Ita%C3%BA_Unibanco_logo_2023.svg.png" alt="Itaú Unibanco"></div></div>
+      <div class="content">
+        <div class="panel"><div class="panel-title">Output 1 • HUB Analítico por servidor</div><table class="table"><thead><tr><th>Coluna</th><th>Origem / regra</th></tr></thead><tbody><tr><td>Chave / Tipo_chave</td><td>Servidor; substitui a antiga visão por Sigla de Sistema</td></tr><tr><td>Criticidade</td><td>Tier/Criticidade herdada da sigla via resultado_query1</td></tr><tr><td>Diretoria / Comunidade</td><td>Enriquecimento organizacional via resultado_query1</td></tr><tr><td>Conformidade</td><td>Regra baseada em obsolescência/rating por servidor + software</td></tr><tr><td>Detalhe_Cabecalho</td><td>Rastreabilidade: software, versão, status, rating, impacto, cloud, sigla, ambiente e arquitetura</td></tr></tbody></table></div>
+        <div class="panel"><div class="panel-title">Output 2 • Percentual e farol</div><div class="two-metric"><div class="metric"><span>Total de registros</span><b>n</b></div><div class="metric"><span>Total inconforme</span><b>x</b></div></div><pre class="code">percentual_inconformidade = total_inconformes / total_registros * 100</pre><div class="farol"><div class="farol-card"><div class="dot green"></div><b>Verde</b><span>≤ 5%</span></div><div class="farol-card"><div class="dot yellow"></div><b>Amarelo</b><span>&gt; 5% e &lt; 20%</span></div><div class="farol-card"><div class="dot red"></div><b>Vermelho</b><span>≥ 20%</span></div></div><div class="quote">O farol traduz dado técnico em linguagem de gestão.</div></div>
+      </div><div class="footer-callout"><div class="icon">2</div><div><b>Entrega do case</b><span>Um output para execução operacional e outro para acompanhamento executivo da inconformidade.</span></div></div>
+    </section>
+    <section class="slide">
+      <div class="top"><div><div class="eyebrow">Slide 09 • Consumo</div><h1>Views no Athena: consumo executivo e operacional</h1><p class="subtitle">As views simplificam o consumo no Athena e no QuickSight, separando perguntas estratégicas de perguntas operacionais.</p></div><div class="brand"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/19/Ita%C3%BA_Unibanco_logo_2023.svg/250px-Ita%C3%BA_Unibanco_logo_2023.svg.png" alt="Itaú Unibanco"></div></div>
+      <div class="content">
+        <div class="panel"><div class="panel-title">Views por Sigla</div><div class="story-list"><div class="story-item"><div class="num">S</div><div><b>vw_ranking_risco_por_sigla</b><span>Ranking executivo por score de risco.</span></div></div><div class="story-item"><div class="num">S</div><div><b>vw_resumo_risco_por_sigla</b><span>Distribuição por classificação de risco.</span></div></div><div class="story-item"><div class="num">S</div><div><b>vw_top_10_siglas_criticas</b><span>Top aplicações para priorização estratégica.</span></div></div></div></div>
+        <div class="panel"><div class="panel-title">Views por Servidor</div><div class="story-list"><div class="story-item"><div class="num">H</div><div><b>vw_ranking_risco_por_servidor</b><span>Ranking dos servidores mais críticos.</span></div></div><div class="story-item"><div class="num">H</div><div><b>vw_detalhe_obsolescencia_por_servidor</b><span>Detalhe linha a linha para investigação.</span></div></div><div class="story-item"><div class="num">H</div><div><b>vw_hub_analitico_por_servidor</b><span>Output final no layout do case.</span></div></div></div></div>
+      </div><div class="footer-callout"><div class="icon">Q</div><div><b>QuickSight</b><span>O dashboard deve focar em ranking, distribuição de risco, farol e trilha de remediação.</span></div></div>
+    </section>
+
+    <section class="slide">
+      <div class="top"><div><div class="eyebrow">Slide 10 • Particionamento</div><h1>Preparação para histórico: partição ano_mes = 202604</h1><p class="subtitle">Embora o case use um snapshot de abril/2026, a solução já nasce preparada para execução mensal.</p></div><div class="brand"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/19/Ita%C3%BA_Unibanco_logo_2023.svg/250px-Ita%C3%BA_Unibanco_logo_2023.svg.png" alt="Itaú Unibanco"></div></div>
+      <div class="content">
+        <div class="panel"><div class="panel-title">Partição temporal</div><pre class="code">gold_hub_analitico_por_servidor/
+└── ano_mes=202604/
+    ├── part-0000.snappy.parquet
+    └── part-0001.snappy.parquet
+
+gold_controle_inconformidades_por_servidor/
+└── ano_mes=202604/
+    └── part-0000.snappy.parquet</pre></div>
+        <div class="panel"><div class="panel-title">Por que isso importa?</div><div class="story-list"><div class="story-item"><div class="num">1</div><div><b>Histórico</b><span>Permite comparar a evolução mês a mês.</span></div></div><div class="story-item"><div class="num">2</div><div><b>Custo Athena</b><span>Consulta apenas o mês necessário.</span></div></div><div class="story-item"><div class="num">3</div><div><b>Escalabilidade</b><span>Prepara ingestões incrementais futuras.</span></div></div></div></div>
+      </div><div class="footer-callout"><div class="icon">M</div><div><b>Fala executiva</b><span>A solução entrega o snapshot solicitado e já fica pronta para evolução histórica do controle.</span></div></div>
+    </section>
+
+
+    <section class="slide">
+      <div class="top"><div><div class="eyebrow">Slide 11 • GenAI conversacional</div><h1>E se o usuário pudesse conversar com os dados?</h1><p class="subtitle">Evolução natural da solução: um chatbot conversacional conectado ao ambiente IARA do Itaú para transformar perguntas de negócio em respostas rastreáveis sobre risco tecnológico.</p></div><div class="brand"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/19/Ita%C3%BA_Unibanco_logo_2023.svg/250px-Ita%C3%BA_Unibanco_logo_2023.svg.png" alt="Itaú Unibanco"></div></div>
+      <div class="content one">
+        <div class="panel">
+          <div class="chatbot-shell">
+            <div class="genai-stack">
+              <div class="iara-badge">IARA + Dados Governados + Athena</div>
+              <div class="genai-card"><div class="icon-chip">1</div><div><b>Camada conversacional</b><span>Usuários fazem perguntas em linguagem natural, sem precisar conhecer SQL, tabelas ou regras técnicas do pipeline.</span></div></div>
+              <div class="genai-card"><div class="icon-chip">2</div><div><b>Contexto governado</b><span>O chatbot consulta as Golds e views já curadas: risco por sigla, obsolescência por servidor, HUB analítico e farol de inconformidade.</span></div></div>
+              <div class="genai-card"><div class="icon-chip">3</div><div><b>Resposta explicável</b><span>A resposta não entrega apenas um número: mostra fonte, período <b>ano_mes=202604</b>, regra de cálculo e caminho de rastreabilidade.</span></div></div>
+              <div class="genai-card"><div class="icon-chip">4</div><div><b>Ação operacional</b><span>Além de responder “qual é o risco?”, a solução orienta “onde atuar”: servidor, software, versão, sigla e impacto.</span></div></div>
+            </div>
+            <div class="chat-window">
+              <div class="chat-header"><div class="chat-agent"><div class="bot-avatar">IA</div><div>Assistente de Risco Tecnológico</div></div><div class="status-dot">Conectado ao IARA</div></div>
+              <div class="chat-messages">
+                <div class="bubble user">Quais servidores estão mais críticos em abril/2026?</div>
+                <div class="bubble bot"><b>Resposta</b>Consultei a visão <b>vw_ranking_risco_por_servidor</b> filtrando <b>ano_mes=202604</b>. Os servidores com maior score combinam obsolescência média, criticidade, rating e impacto crítico.</div>
+                <div class="bubble user">Por que esse servidor aparece no topo?</div>
+                <div class="bubble bot"><b>Explicação</b>Ele possui softwares com versão obsoleta, rating médio/alto e impacto relevante. A trilha está no <b>Detalhe_Cabecalho</b>, com servidor, software, versão, sigla, ambiente e arquitetura.</div>
+                <div class="bubble user">Qual ação o time deve priorizar?</div>
+                <div class="bubble bot"><b>Próxima melhor ação</b>Priorizar atualização/remediação dos softwares com maior índice de obsolescência em produção, começando pelos servidores classificados como Alto ou com impacto Crítico.</div>
+              </div>
+              <div class="prompt-bar"><span>Pergunte sobre siglas, servidores, softwares, farol ou inconformidade...</span><div class="send-dot">→</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="footer-callout"><div class="icon">AI</div><div><b>Visão de futuro</b><span>Com GenAI, o produto deixa de ser apenas dashboard e vira uma interface inteligente para acelerar diagnóstico, priorização e tomada de decisão.</span></div></div>
+    </section>
+
+    <section class="slide">
+      <div class="top"><div><div class="eyebrow">Slide 12 • Valor de negócio</div><h1>Valor entregue: rastreabilidade, priorização e governança de risco tecnológico</h1><p class="subtitle">A solução conecta dados técnicos ao processo de tomada de decisão e remediação.</p></div><div class="brand"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/19/Ita%C3%BA_Unibanco_logo_2023.svg/250px-Ita%C3%BA_Unibanco_logo_2023.svg.png" alt="Itaú Unibanco"></div></div>
+      <div class="content three"><div class="panel"><div class="panel-title">Rastreabilidade</div><div class="big-number">01</div><div class="big-caption">Permite sair da sigla e chegar no servidor, software e versão.</div></div><div class="panel"><div class="panel-title">Priorização</div><div class="big-number">02</div><div class="big-caption">Rankings por sigla e servidor ajudam a focar o esforço técnico onde há maior risco.</div></div><div class="panel"><div class="panel-title">Governança</div><div class="big-number">03</div><div class="big-caption">Outputs finais padronizados, particionados e consumíveis por Athena/QuickSight.</div></div></div>
+      <div class="footer-callout"><div class="icon">✓</div><div><b>Mensagem de fechamento</b><span>O case deixa de ser um ETL e passa a ser um produto de dados para modernização tecnológica.</span></div></div>
+    </section>
+
+  </main>
+
+  <div class="modal-backdrop" id="goldModal" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modal-head"><div class="modal-title" id="modalTitle"></div><button class="modal-close" id="modalClose">×</button></div>
+      <div class="modal-body" id="modalBody"></div>
+    </div>
+  </div>
+  <div class="controls"><button class="nav-btn" id="prev">←</button><span class="count" id="count">1 / 12</span><button class="nav-btn" id="next">→</button><button class="small-btn" id="restart">Reiniciar</button></div>
+  <div class="progress"><span id="progressBar"></span></div>
+  <script>
+    const root=document.documentElement;
+    const themeBtn=document.getElementById('themeToggle');
+    const slides=[...document.querySelectorAll('.slide')];
+    const count=document.getElementById('count');
+    const prev=document.getElementById('prev');
+    const next=document.getElementById('next');
+    const restart=document.getElementById('restart');
+    const progress=document.getElementById('progressBar');
+    let idx=0;
+    function setTheme(t){root.setAttribute('data-theme',t);themeBtn.textContent=t==='dark'?'☾':'☀';localStorage.setItem('caseTechTheme',t)}
+    setTheme(localStorage.getItem('caseTechTheme')||'light');
+    themeBtn.addEventListener('click',()=>setTheme(root.getAttribute('data-theme')==='dark'?'light':'dark'));
+    function go(n){const target=Math.max(0,Math.min(slides.length-1,n));slides.forEach((s,i)=>{s.classList.remove('active','exit-left');if(i<target)s.classList.add('exit-left');s.scrollTop=0});slides[target].classList.add('active');idx=target;count.textContent=`${idx+1} / ${slides.length}`;prev.disabled=idx===0;next.disabled=idx===slides.length-1;progress.style.width=`${((idx+1)/slides.length)*100}%`}
+    prev.addEventListener('click',()=>go(idx-1));next.addEventListener('click',()=>go(idx+1));restart.addEventListener('click',()=>go(0));
+    document.addEventListener('keydown',e=>{if(e.key==='ArrowRight'||e.key===' ')go(idx+1);if(e.key==='ArrowLeft')go(idx-1);if(e.key.toLowerCase()==='r')go(0);if(e.key.toLowerCase()==='d')setTheme(root.getAttribute('data-theme')==='dark'?'light':'dark')});
+
+    const modalData={
+      fonte_servidores:{title:'servidores_siglas',sections:[['O que é','É o inventário de servidores usado como ponto de partida operacional. Ele responde: quais servidores existem, a qual sigla pertencem, em qual ambiente estão e qual é a arquitetura.'],['Granularidade','Uma linha representa um servidor associado a uma sigla. É a base que permite sair do nível de aplicação e chegar ao ativo onde a remediação acontece.'],['Como entra no modelo','Faz join com cmdb_software_instance_sot usando nome do servidor = installed_on. A partir daí o pipeline descobre quais softwares existem em cada servidor.']]},
+      fonte_software_instance:{title:'cmdb_software_instance_sot',sections:[['O que é CMDB','CMDB significa Configuration Management Database: uma base de gerenciamento de configuração. Na prática, ela guarda informações sobre ativos e componentes de tecnologia, como servidores e softwares instalados.'],['Granularidade','Nesta fonte, a granularidade é servidor + software instalado. Exemplo: um servidor pode aparecer em várias linhas, uma para cada software instalado.'],['Como entra no modelo','Faz join com servidores_siglas por installed_on = nome do servidor. Depois, o campo software é cruzado com o catálogo cmdb_ci_spkg_sot usando a regra software = name + version.']]},
+      fonte_spkg:{title:'cmdb_ci_spkg_sot',sections:[['O que é','É o catálogo tecnológico de pacotes de software. Ele ajuda a padronizar o que foi encontrado instalado na CMDB, separando nome, versão e identificador do produto.'],['Granularidade','Uma linha representa um pacote de software catalogado, normalmente com name + version. Essa granularidade é essencial porque o risco de obsolescência depende da versão.'],['Como entra no modelo','Faz join com cmdb_software_instance_sot pela chave software instalado = name + version. Sem esse join, software_catalogado, versão e produto tecnológico ficam vazios.']]},
+      fonte_query1:{title:'resultado_query1',sections:[['O que é','É a dimensão organizacional da sigla. Ela traz os atributos de negócio que precisam ser herdados no layout final.'],['Granularidade','Uma linha por sigla de sistema. É uma visão organizacional, não operacional.'],['Como entra no modelo','Enriquece o output final com Diretoria, Comunidade e Criticidade/Tier da sigla. É o que transforma o resultado técnico em um artefato aderente ao template executivo.']]},
+      fonte_query2:{title:'resultado_query2',sections:[['O que é','É a dimensão de produto/domínio. Ela complementa o detalhe do produto tecnológico com Nome, Pillar, Domínio e Subdomínio.'],['Granularidade','Uma linha por produto tecnológico ou domínio de produto, dependendo da origem.'],['Como entra no modelo','É usada no Job 04 para enriquecer o Detalhe_Cabecalho do HUB Analítico, aumentando a rastreabilidade e o contexto de negócio do software analisado.']]},
+      fonte_query3:{title:'resultado_query3',sections:[['O que é','É a base de obsolescência e risco tecnológico. Ela informa se determinado produto/versão está atualizado, obsoleto ou com risco relevante.'],['Granularidade','A granularidade original é sigla + produto tecnológico + versão. Ou seja, ela ainda não está no nível de servidor. O papel da solução é levar esse risco até o servidor por meio dos joins com CMDB e catálogo.'],['Como entra no modelo','Depois que o Job 03 identifica servidor, software catalogado e versão, essa base traz status, criticidade, índice de obsolescência, rating, impacto e cloud. É a principal fonte dos campos de risco.']]},
+      sigla:{title:'gold_risco_tecnologico_por_sigla',sections:[['O que representa','Visão executiva consolidada por sigla de sistema/aplicação. Serve para priorizar quais aplicações concentram maior risco tecnológico.'],['Principais informações','Quantidade de produtos tecnológicos, relacionamentos, média de obsolescência, média de criticidade, riscos altos/médios, impactos críticos, itens cloud, servidores e score de risco operacional.'],['Como é calculada','Agrega os dados por sigla, combina médias de criticidade/obsolescência com contagens de risco e impacto, e classifica o resultado em faixas de risco.']]},
+      servidor:{title:'gold_obsolescencia_por_servidor',sections:[['O que representa','Visão operacional na granularidade correta do case: uma linha por servidor, software, versão e risco. É a tabela que aponta onde a remediação deve acontecer.'],['Principais informações','Servidor, sigla de origem, arquitetura, ambiente, software instalado, software catalogado, versão, produto tecnológico, status, criticidade, índice de obsolescência, rating, impacto e cloud.'],['Como é calculada','Cruza servidores_siglas com cmdb_software_instance_sot pelo servidor; depois conecta o software instalado ao catálogo cmdb_ci_spkg_sot usando nome + versão; por fim, enriquece com resultado_query3 para trazer atributos de risco.']]},
+      hub:{title:'gold_hub_analitico_por_servidor',sections:[['O que representa','Arquivo final no layout exigido pelo case, mantendo as 11 colunas do template e substituindo a chave por Servidor.'],['Principais informações','Indicador, Nome_Catch, Chave, Tipo_chave, Descricao_chave, Criticidade/Tier, Diretoria, Comunidade, Conformidade, Nome_Cabecalho e Detalhe_Cabecalho.'],['Como é calculada','Parte da gold_obsolescencia_por_servidor e acrescenta os atributos organizacionais de resultado_query1 e resultado_query2, preservando a rastreabilidade no Detalhe_Cabecalho.']]},
+      farol:{title:'gold_controle_inconformidades_por_servidor',sections:[['O que representa','Tabela sintética para controle executivo do percentual de inconformidades.'],['Principais informações','Total de registros, total de inconformes, percentual de inconformidade, farol, critério do farol, data de processamento e ano_mes.'],['Como é calculada','Conta os registros do HUB Analítico, calcula a razão entre inconformes e total, e aplica o farol: Verde até 5%, Amarelo acima de 5% e abaixo de 20%, Vermelho a partir de 20%.']]}
+    };
+    const goldModal=document.getElementById('goldModal');
+    const modalTitle=document.getElementById('modalTitle');
+    const modalBody=document.getElementById('modalBody');
+    const modalClose=document.getElementById('modalClose');
+    document.querySelectorAll('[data-modal]').forEach(card=>card.addEventListener('click',()=>{const d=modalData[card.dataset.modal];modalTitle.textContent=d.title;modalBody.innerHTML=d.sections.map(([h,t])=>`<div class="modal-section"><b>${h}</b><span>${t}</span></div>`).join('');goldModal.classList.add('open');goldModal.setAttribute('aria-hidden','false')}));
+    function closeModal(){goldModal.classList.remove('open');goldModal.setAttribute('aria-hidden','true')}
+    modalClose.addEventListener('click',closeModal);goldModal.addEventListener('click',e=>{if(e.target===goldModal)closeModal()});
+    document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal()});
+    go(0);
+  </script>
+</body>
+</html>
