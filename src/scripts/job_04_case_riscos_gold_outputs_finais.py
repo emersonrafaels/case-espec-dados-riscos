@@ -18,7 +18,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-DATABASE_NAME = "workspace_db_case_espec_dados_riscos"
+DATABASE_NAME = "workspace_db"
 BUCKET = "workspace-db-case-espec-dados-riscos"
 
 SOURCE_GOLD_TABLE = "case_riscos_gold_obsolescencia_por_servidor"

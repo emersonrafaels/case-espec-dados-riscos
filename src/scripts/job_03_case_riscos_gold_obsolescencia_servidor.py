@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 # Configuração do Job
 # ============================================================
 
-DATABASE_NAME = "workspace_db_case_espec_dados_riscos"
+DATABASE_NAME = "workspace_db"
 BUCKET_NAME = "workspace-db-case-espec-dados-riscos"
 
 # Nome padronizado: sempre termina em _por_servidor

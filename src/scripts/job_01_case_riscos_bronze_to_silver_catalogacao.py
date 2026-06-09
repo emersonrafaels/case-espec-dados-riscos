@@ -37,7 +37,7 @@ args = getResolvedOptions(sys.argv, ["JOB_NAME"])
 
 # --- Identificação do bucket e database ---
 BUCKET = "workspace-db-case-espec-dados-riscos"
-DATABASE_NAME = "workspace_db_case_espec_dados_riscos"
+DATABASE_NAME = "workspace_db"
 
 # --- Prefixos das camadas no S3 (arquitetura medalhão) ---
 BRONZE_PREFIX = "case-riscos/bronze"

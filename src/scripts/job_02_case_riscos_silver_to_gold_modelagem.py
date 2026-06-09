@@ -32,7 +32,7 @@ logger = logging.getLogger(__name__)
 # ============================================================
 
 # --- Identificação do database e caminho de saída ---
-DATABASE   = "workspace_db_case_espec_dados_riscos"
+DATABASE   = "workspace_db"
 GOLD_TABLE = "case_riscos_gold_risco_tecnologico_por_sigla"
 GOLD_PATH  = f"s3://workspace-db-case-espec-dados-riscos/case-riscos/gold/{GOLD_TABLE}/"
 
