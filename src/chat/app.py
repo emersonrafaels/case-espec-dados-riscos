@@ -175,7 +175,10 @@ def _render_charts(df: pd.DataFrame) -> None:
 
     cat_cols = [
         c for c in df.columns
-        if str(df[c].dtype) in ("category", "object") and df[c].nunique() > 1
+        if not pd.api.types.is_numeric_dtype(df[c])
+        and not pd.api.types.is_bool_dtype(df[c])
+        and not pd.api.types.is_datetime64_any_dtype(df[c])
+        and df[c].nunique() > 1
     ]
     num_cols = df.select_dtypes(include="number").columns.tolist()
 
@@ -191,7 +194,7 @@ def _render_charts(df: pd.DataFrame) -> None:
     with chart_col:
         if chart_type == "Barras":
             if not cat_cols:
-                st.warning("Nenhuma coluna categorica encontrada (max 100 valores unicos).")
+                st.warning("Nenhuma coluna categorica encontrada.")
                 return
             col   = st.selectbox("Coluna", cat_cols, key="bar_col")
             top_n = st.slider("Top N valores", 5, 50, 15, key="bar_n")
