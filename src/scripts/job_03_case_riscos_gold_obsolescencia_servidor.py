@@ -32,13 +32,13 @@ DATABASE_NAME = "workspace_db_case_espec_dados_riscos"
 BUCKET_NAME = "workspace-db-case-espec-dados-riscos"
 
 # Nome padronizado: sempre termina em _por_servidor
-GOLD_TABLE = "gold_obsolescencia_por_servidor"
-GOLD_PATH = f"s3://{BUCKET_NAME}/gold/{GOLD_TABLE}/"
+GOLD_TABLE = "case_riscos_gold_obsolescencia_por_servidor"
+GOLD_PATH = f"s3://{BUCKET_NAME}/case-riscos/gold/{GOLD_TABLE}/"
 
 # Views analíticas compatíveis com a visão por sigla, mas na granularidade servidor
-VW_RANKING_RISCO_POR_SERVIDOR = "vw_ranking_risco_por_servidor"
-VW_DETALHE_OBSOLESCENCIA_POR_SERVIDOR = "vw_detalhe_obsolescencia_por_servidor"
-VW_RESUMO_RISCO_POR_SERVIDOR = "vw_resumo_risco_por_servidor"
+VW_RANKING_RISCO_POR_SERVIDOR = "case_riscos_vw_ranking_risco_por_servidor"
+VW_DETALHE_OBSOLESCENCIA_POR_SERVIDOR = "case_riscos_vw_detalhe_obsolescencia_por_servidor"
+VW_RESUMO_RISCO_POR_SERVIDOR = "case_riscos_vw_resumo_risco_por_servidor"
 
 # Pesos do score por servidor
 PESO_OBSOLESCENCIA_SERVIDOR = 10.0
@@ -49,6 +49,9 @@ PESO_IMPACTO_CRITICO = 3.0
 # Limiares do score por servidor
 LIMIAR_RISCO_ALTO = 60.0
 LIMIAR_RISCO_MEDIO = 20.0
+
+# --- Particionamento ---
+ANOMES_DEFAULT = "202604"  # Valor padrão para a partição anomes (AAAAMM)
 
 
 # ============================================================
@@ -104,10 +107,10 @@ def read_silver_tables(
         return spark.table(full_name)
 
     return (
-        _read("servidores_siglas"),
-        _read("resultado_query3"),
-        _read("cmdb_software_instance_sot"),
-        _read("cmdb_ci_spkg_sot"),
+        _read("case_riscos_servidores_siglas"),
+        _read("case_riscos_resultado_query3"),
+        _read("case_riscos_cmdb_software_instance_sot"),
+        _read("case_riscos_cmdb_ci_spkg_sot"),
     )
 
 
@@ -240,26 +243,46 @@ def build_gold_por_servidor(
             ).alias("detalhe_cabecalho"),
             F.current_timestamp().alias("data_processamento"),
             F.lit("gold").alias("camada"),
+            # Partição por período de referência (AAAAMM) — permite reprocessamento incremental
+            F.lit(ANOMES_DEFAULT).alias("anomes"),
         )
         .dropDuplicates()
     )
 
 
-def write_gold(df: DataFrame, database: str, table: str, path: str) -> None:
+def write_gold(spark: SparkSession, df: DataFrame, database: str, table: str, path: str) -> None:
     """
     Persiste DataFrame como tabela Gold no Glue Data Catalog.
+
+    NÃO executa DROP TABLE antes do write em tabelas particionadas.
+    Motivo: DROP TABLE remove a LOCATION do catálogo; saveAsTable subsequente
+    tenta ler a localização da entrada do catálogo (agora ausente), obtém string
+    vazia e lança 'Can not create a Path from an empty string'.
+
+    Estratégia adotada:
+    - partitionOverwriteMode=dynamic  →  mode("overwrite") sobrescreve apenas
+      as partições presentes no DataFrame, sem tocar nas demais.
+    - Primeira execução (tabela inexistente): saveAsTable cria a tabela no
+      catálogo com a LOCATION apontando para `path`.
+    - Reexecuções: Spark atualiza apenas a partição anomes correspondente.
     """
     full_name = f"{database}.{table}"
-    logger.info("Recriando tabela: %s", full_name)
-    spark.sql(f"DROP TABLE IF EXISTS {full_name}")
+    logger.info("Gravando tabela: %s -> %s", full_name, path)
+
+    # Sobrescreve somente a partição presente no DataFrame (não a tabela inteira)
+    spark.conf.set("spark.sql.sources.partitionOverwriteMode", "dynamic")
 
     (
-        df.write.mode("overwrite")
+        df.write
+        .mode("overwrite")
         .format("parquet")
         .option("compression", "snappy")
-        .option("path", path)
-        .saveAsTable(full_name)
+        .option("path", path)       # LOCATION usada pelo catálogo na primeira execução
+        .partitionBy("anomes")      # Partição por período de referência (AAAAMM)
+        .saveAsTable(full_name)     # Cria ou atualiza a entrada no Glue Data Catalog
     )
+
+    logger.info("Tabela gravada: %s -> %s", full_name, path)
 
 
 # ============================================================
@@ -364,7 +387,7 @@ def main(spark: SparkSession, job_name: str) -> None:
         relacionamentos_tratado,
     )
 
-    write_gold(gold, DATABASE_NAME, GOLD_TABLE, GOLD_PATH)
+    write_gold(spark, gold, DATABASE_NAME, GOLD_TABLE, GOLD_PATH)
     create_views_por_servidor(spark, DATABASE_NAME, GOLD_TABLE)
 
     logger.info("Job finalizado em %.2fs", time.perf_counter() - job_start)

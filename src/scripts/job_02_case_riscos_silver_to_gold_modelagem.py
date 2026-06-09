@@ -9,7 +9,7 @@ from awsglue.context import GlueContext
 from awsglue.job import Job
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.functions import (
-    col, lower, trim, current_timestamp, countDistinct,
+    col, lit, lower, trim, current_timestamp, countDistinct,
     count, avg, when, regexp_replace
 )
 
@@ -33,8 +33,8 @@ logger = logging.getLogger(__name__)
 
 # --- Identificação do database e caminho de saída ---
 DATABASE   = "workspace_db_case_espec_dados_riscos"
-GOLD_PATH  = "s3://workspace-db-case-espec-dados-riscos/gold/gold_risco_tecnologico_por_sigla/"
-GOLD_TABLE = "gold_risco_tecnologico_por_sigla"
+GOLD_TABLE = "case_riscos_gold_risco_tecnologico_por_sigla"
+GOLD_PATH  = f"s3://workspace-db-case-espec-dados-riscos/case-riscos/gold/{GOLD_TABLE}/"
 
 # --- Pesos do score de risco operacional (altere aqui para recalibrar o modelo) ---
 PESO_RISCO_ALTO_MEDIO = 3.0
@@ -45,6 +45,9 @@ PESO_SERVIDOR_PROD    = 0.2
 # --- Limiares de classificação do score de risco (inclusive) ---
 LIMIAR_RISCO_ALTO  = 50.0
 LIMIAR_RISCO_MEDIO = 20.0
+
+# --- Particionamento ---
+ANOMES_DEFAULT = "202604"  # Valor padrão para a partição anomes (AAAAMM)
 
 
 # ============================================================
@@ -73,10 +76,10 @@ def read_silver_tables(
         return spark.table(full_name)
 
     return (
-        _read("resultado_query3"),
-        _read("servidores_siglas"),
-        _read("cmdb_software_instance_sot"),
-        _read("cmdb_ci_spkg_sot"),
+        _read("case_riscos_resultado_query3"),
+        _read("case_riscos_servidores_siglas"),
+        _read("case_riscos_cmdb_software_instance_sot"),
+        _read("case_riscos_cmdb_ci_spkg_sot"),
     )
 
 
@@ -246,6 +249,8 @@ def build_gold(
 
         # Timestamp de processamento para auditoria e rastreabilidade na camada Gold
         .withColumn("data_processamento", current_timestamp())
+        # Partição por período de referência (AAAAMM) — permite reprocessamento incremental
+        .withColumn("anomes", lit(ANOMES_DEFAULT))
     )
 
 
@@ -261,6 +266,7 @@ def write_gold(df: DataFrame, database: str, table: str, path: str) -> None:
         .format("parquet")
         .option("compression", "snappy") # Snappy: melhor equilíbrio velocidade/tamanho para Athena
         .option("path", path)            # Grava fisicamente no prefixo S3 definido
+        .partitionBy("anomes")           # Particiona por período de referência (AAAAMM)
         .saveAsTable(f"{database}.{table}")  # Registra/atualiza entrada no Glue Data Catalog
     )
 

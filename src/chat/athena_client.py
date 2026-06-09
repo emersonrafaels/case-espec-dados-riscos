@@ -78,6 +78,29 @@ class AthenaClient:
             kwargs["NextToken"] = token
         return sorted(tables)
 
+    def get_partition_keys(self, database: Optional[str] = None, table: Optional[str] = None) -> list:
+        """Retorna os nomes das colunas de partição da tabela via Glue Catalog."""
+        db  = database or self.database
+        tbl = table    or self.table
+        resp = self._glue.get_table(DatabaseName=db, Name=tbl)
+        return [pk["Name"] for pk in resp["Table"].get("PartitionKeys", [])]
+
+    def list_partitions(self, database: Optional[str] = None, table: Optional[str] = None) -> list:
+        """Retorna os valores de partição disponíveis via Glue Catalog (mais recentes primeiro)."""
+        db  = database or self.database
+        tbl = table    or self.table
+        values = []
+        kwargs = {"DatabaseName": db, "TableName": tbl}
+        while True:
+            resp = self._glue.get_partitions(**kwargs)
+            for p in resp.get("Partitions", []):
+                values.append("/".join(p["Values"]))
+            token = resp.get("NextToken")
+            if not token:
+                break
+            kwargs["NextToken"] = token
+        return sorted(set(values), reverse=True)
+
     def query(
         self,
         sql: str,

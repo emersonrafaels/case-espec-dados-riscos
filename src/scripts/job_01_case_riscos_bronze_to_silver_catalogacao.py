@@ -40,8 +40,8 @@ BUCKET = "workspace-db-case-espec-dados-riscos"
 DATABASE_NAME = "workspace_db_case_espec_dados_riscos"
 
 # --- Prefixos das camadas no S3 (arquitetura medalhão) ---
-BRONZE_PREFIX = "bronze"
-SILVER_PREFIX = "silver"
+BRONZE_PREFIX = "case-riscos/bronze"
+SILVER_PREFIX = "case-riscos/silver"
 
 # --- Limiar de nulos (0.0 a 1.0): colunas acima desse percentual são
 #     reportadas no log de qualidade. Não bloqueia o processamento. ---
@@ -51,6 +51,8 @@ NULL_THRESHOLD = 0.5
 SOURCE_FOLDERS = [
     "cmdb_ci_spkg_sot",
     "cmdb_software_instance_sot",
+    "resultado_query1",
+    "resultado_query2",
     "resultado_query3",
     "servidores_siglas"
 ]
@@ -413,8 +415,8 @@ def process_source_folder(folder_name: str) -> None:
         logger.warning("Nenhum arquivo válido em: %s", bronze_folder_prefix)
         return
 
-    # O nome da tabela é derivado do nome da pasta, garantindo consistência
-    table_name = normalize_column_name(folder_name)
+    # O nome da tabela inclui o prefixo case_riscos_ para facilitar filtragem no catálogo
+    table_name = f"case_riscos_{normalize_column_name(folder_name)}"
 
     for file_key in valid_files:
         logger.info("Iniciando processamento: %s", file_key)

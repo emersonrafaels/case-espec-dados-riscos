@@ -10,10 +10,6 @@ from awsglue.job import Job
 from awsglue.utils import getResolvedOptions
 
 
-# ============================================================
-# Configuração de Logging
-# ============================================================
-
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(name)s - %(message)s",
@@ -22,60 +18,104 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-# ============================================================
-# Configuração do Job
-# ============================================================
-
 DATABASE_NAME = "workspace_db_case_espec_dados_riscos"
 BUCKET = "workspace-db-case-espec-dados-riscos"
 
-# Fonte principal criada no job_03, com nomenclatura padronizada
-SOURCE_GOLD_TABLE = "gold_obsolescencia_por_servidor"
+SOURCE_GOLD_TABLE = "case_riscos_gold_obsolescencia_por_servidor"
+DIM_SIGLAS_TABLE = "case_riscos_resultado_query1"
+DIM_PRODUTOS_TABLE = "case_riscos_resultado_query2"
 
-# Outputs finais exigidos pelo case; ambos terminam em _por_servidor
-GOLD_HUB_TABLE = "gold_hub_analitico_por_servidor"
-GOLD_CONTROLE_TABLE = "gold_controle_inconformidades_por_servidor"
+GOLD_HUB_TABLE = "case_riscos_gold_hub_analitico_por_servidor"
+GOLD_CONTROLE_TABLE = "case_riscos_gold_controle_inconformidades_por_servidor"
 
-GOLD_HUB_PATH = f"s3://{BUCKET}/gold/{GOLD_HUB_TABLE}/"
-GOLD_CONTROLE_PATH = f"s3://{BUCKET}/gold/{GOLD_CONTROLE_TABLE}/"
+GOLD_HUB_PATH = f"s3://{BUCKET}/case-riscos/gold/{GOLD_HUB_TABLE}/"
+GOLD_CONTROLE_PATH = f"s3://{BUCKET}/case-riscos/gold/{GOLD_CONTROLE_TABLE}/"
 
-# Farol do case
 FAROL_VERDE_MAX = 5.0
 FAROL_AMARELO_MAX = 20.0
 
+# --- Particionamento ---
+ANOMES_DEFAULT = "202604"  # Valor padrão para a partição anomes (AAAAMM)
 
-# ============================================================
-# Leitura
-# ============================================================
 
-def read_gold_por_servidor(spark: SparkSession) -> DataFrame:
-    """
-    Lê a Gold operacional criada no job_03, já na granularidade por servidor.
-    """
-    full_name = f"{DATABASE_NAME}.{SOURCE_GOLD_TABLE}"
-    logger.info("Lendo tabela fonte: %s", full_name)
+def normalize_col(column_name: str):
+    return F.lower(F.trim(F.col(column_name)))
+
+
+def read_table(spark: SparkSession, table_name: str) -> DataFrame:
+    full_name = f"{DATABASE_NAME}.{table_name}"
+    logger.info("Lendo tabela: %s", full_name)
     return spark.table(full_name)
 
 
-# ============================================================
-# Construção dos outputs finais do case
-# ============================================================
-
-def build_hub_analitico_por_servidor(df: DataFrame) -> DataFrame:
+def prepare_dim_siglas(df: DataFrame) -> DataFrame:
     """
-    Gera o arquivo final no mesmo layout do HUB Analítico do case.
-
-    Colunas obrigatórias:
-        INDICADOR, Nome_Catch, Chave, Tipo_chave, Descricao_chave,
-        Criticidade, Diretoria, Comunidade, Conformidade,
-        Nome_Cabecalho, Detalhe_Cabecalho.
+    Prepara Resultado_QUERY1:
+    sigla_ss, descricao_da_sigla, comunidade, diretoria, criticidade_final.
     """
     return (
-        df.withColumn(
+        df.select(
+            normalize_col("sigla_ss").alias("sigla_join"),
+            F.col("criticidade_final").alias("criticidade_tier"),
+            F.col("diretoria").alias("diretoria"),
+            F.col("comunidade").alias("comunidade"),
+        )
+        .filter(F.col("sigla_join").isNotNull())
+        .dropDuplicates(["sigla_join"])
+    )
+
+
+def prepare_dim_produtos(df: DataFrame) -> DataFrame:
+    """
+    Prepara Resultado_QUERY2:
+    nome, pillar, dominio, subdominio.
+    """
+    return (
+        df.select(
+            normalize_col("nome").alias("produto_join"),
+            F.col("nome").alias("nome_produto"),
+            F.col("pillar").alias("pillar"),
+            F.col("dominio").alias("dominio"),
+            F.col("subdominio").alias("subdominio"),
+        )
+        .filter(F.col("produto_join").isNotNull())
+        .dropDuplicates(["produto_join"])
+    )
+
+
+def prepare_gold_por_servidor(df: DataFrame) -> DataFrame:
+    return (
+        df
+        .withColumn("sigla_join", normalize_col("sigla_origem"))
+        .withColumn(
+            "produto_join",
+            F.lower(
+                F.trim(
+                    F.coalesce(
+                        F.col("produto_tecnologico"),
+                        F.col("software_catalogado"),
+                        F.col("software_instalado"),
+                    )
+                )
+            ),
+        )
+    )
+
+
+def build_hub_analitico_por_servidor(
+    gold_df: DataFrame,
+    dim_siglas: DataFrame,
+    dim_produtos: DataFrame,
+) -> DataFrame:
+    return (
+        gold_df.alias("gold")
+        .join(dim_siglas.alias("sig"), on="sigla_join", how="left")
+        .join(dim_produtos.alias("prod"), on="produto_join", how="left")
+        .withColumn(
             "Conformidade",
             F.when(
-                (F.col("indice_obsolescencia") > 0)
-                | F.lower(F.col("rating")).isin("alto", "médio", "medio", "baixo"),
+                (F.col("gold.indice_obsolescencia") > 0)
+                | F.lower(F.col("gold.rating")).isin("alto", "médio", "medio", "baixo"),
                 F.lit("Não esta em conformidade"),
             ).otherwise(F.lit("Em conformidade")),
         )
@@ -83,51 +123,47 @@ def build_hub_analitico_por_servidor(df: DataFrame) -> DataFrame:
             "Detalhe_Cabecalho_Final",
             F.concat_ws(
                 " | ",
-                F.concat(F.lit("sigla_origem="), F.coalesce(F.col("sigla_origem"), F.lit(""))),
-                F.concat(F.lit("software_instalado="), F.coalesce(F.col("software_instalado"), F.lit(""))),
-                F.concat(F.lit("software_catalogado="), F.coalesce(F.col("software_catalogado"), F.lit(""))),
-                F.concat(F.lit("produto_tecnologico="), F.coalesce(F.col("produto_tecnologico"), F.lit(""))),
-                F.concat(F.lit("versao="), F.coalesce(F.col("versao"), F.lit(""))),
-                F.concat(F.lit("status="), F.coalesce(F.col("status_relacionamento"), F.lit(""))),
-                F.concat(F.lit("criticidade="), F.coalesce(F.col("criticidade").cast("string"), F.lit(""))),
-                F.concat(F.lit("indice_obsolescencia="), F.coalesce(F.col("indice_obsolescencia").cast("string"), F.lit(""))),
-                F.concat(F.lit("rating="), F.coalesce(F.col("rating"), F.lit(""))),
-                F.concat(F.lit("impacto="), F.coalesce(F.col("impacto"), F.lit(""))),
-                F.concat(F.lit("cloud="), F.coalesce(F.col("cloud"), F.lit(""))),
-                F.concat(F.lit("ambiente="), F.coalesce(F.col("ambiente"), F.lit(""))),
-                F.concat(F.lit("arquitetura="), F.coalesce(F.col("arquitetura"), F.lit(""))),
+                F.coalesce(F.col("gold.produto_tecnologico"), F.col("gold.software_catalogado"), F.col("gold.software_instalado"), F.lit("")),
+                F.coalesce(F.col("gold.versao"), F.lit("")),
+                F.coalesce(F.col("gold.status_relacionamento"), F.lit("")),
+                F.coalesce(F.col("gold.criticidade").cast("string"), F.lit("")),
+                F.coalesce(F.col("gold.indice_obsolescencia").cast("string"), F.lit("")),
+                F.coalesce(F.col("gold.rating"), F.lit("")),
+                F.coalesce(F.col("gold.impacto"), F.lit("")),
+                F.coalesce(F.col("gold.cloud"), F.lit("")),
+                F.coalesce(F.col("prod.nome_produto"), F.lit("")),
+                F.coalesce(F.col("prod.pillar"), F.lit("")),
+                F.coalesce(F.col("prod.dominio"), F.lit("")),
+                F.coalesce(F.col("prod.subdominio"), F.lit("")),
+                F.concat(F.lit("sigla_origem="), F.coalesce(F.col("gold.sigla_origem"), F.lit(""))),
+                F.concat(F.lit("ambiente="), F.coalesce(F.col("gold.ambiente"), F.lit(""))),
+                F.concat(F.lit("arquitetura="), F.coalesce(F.col("gold.arquitetura"), F.lit(""))),
             ),
         )
         .select(
             F.lit("Obsolescência tecnológica por servidor").alias("INDICADOR"),
             F.lit("Controle de softwares obsoletos por servidor").alias("Nome_Catch"),
-            F.col("servidor").alias("Chave"),
+            F.col("gold.servidor").alias("Chave"),
             F.lit("Servidor").alias("Tipo_chave"),
-            F.col("descricao_servidor").alias("Descricao_chave"),
-            # Mantemos o campo Criticidade no layout original, usando impacto como proxy operacional
-            F.coalesce(F.col("impacto"), F.lit("Não informado")).alias("Criticidade"),
-            F.lit("Não informado").alias("Diretoria"),
-            F.lit("Não informado").alias("Comunidade"),
+            F.col("gold.descricao_servidor").alias("Descricao_chave"),
+            F.coalesce(F.col("sig.criticidade_tier"), F.lit("Não informado")).alias("Criticidade"),
+            F.coalesce(F.col("sig.diretoria"), F.lit("Não informado")).alias("Diretoria"),
+            F.coalesce(F.col("sig.comunidade"), F.lit("Não informado")).alias("Comunidade"),
             F.col("Conformidade"),
             F.lit(
-                "sigla_origem | software_instalado | software_catalogado | produto_tecnologico | "
-                "versao | status | criticidade | indice_obsolescencia | rating | impacto | cloud | ambiente | arquitetura"
+                "produto | versao | status | criticidade | indice_obsolescencia | "
+                "rating | impacto | cloud | Nome | Pillar | Dominio | Subdominio | "
+                "sigla_origem | ambiente | arquitetura"
             ).alias("Nome_Cabecalho"),
             F.col("Detalhe_Cabecalho_Final").alias("Detalhe_Cabecalho"),
+            # Partição por período de referência (AAAAMM) — permite reprocessamento incremental
+            F.lit(ANOMES_DEFAULT).alias("anomes"),
         )
         .dropDuplicates()
     )
 
 
 def build_controle_inconformidades_por_servidor(hub_df: DataFrame) -> DataFrame:
-    """
-    Gera o percentual de inconformidades e farol do case.
-
-    Regra:
-        Verde    <= 5%
-        Amarelo  > 5% e < 20%
-        Vermelho >= 20%
-    """
     return (
         hub_df.agg(
             F.count("*").alias("total_registros"),
@@ -150,17 +186,12 @@ def build_controle_inconformidades_por_servidor(hub_df: DataFrame) -> DataFrame:
             F.lit("Verde <= 5%; Amarelo > 5% e < 20%; Vermelho >= 20%"),
         )
         .withColumn("data_processamento", F.current_timestamp())
+        # Partição por período de referência (AAAAMM) — permite reprocessamento incremental
+        .withColumn("anomes", F.lit(ANOMES_DEFAULT))
     )
 
 
-# ============================================================
-# Escrita
-# ============================================================
-
 def write_gold_table(spark: SparkSession, df: DataFrame, table_name: str, path: str) -> None:
-    """
-    Grava uma tabela Gold em Parquet e registra no Glue Data Catalog.
-    """
     full_name = f"{DATABASE_NAME}.{table_name}"
     logger.info("Recriando tabela: %s", full_name)
     spark.sql(f"DROP TABLE IF EXISTS {full_name}")
@@ -170,24 +201,38 @@ def write_gold_table(spark: SparkSession, df: DataFrame, table_name: str, path: 
         .format("parquet")
         .option("compression", "snappy")
         .option("path", path)
+        .partitionBy("anomes")         # Particiona por período de referência (AAAAMM)
         .saveAsTable(full_name)
     )
 
     logger.info("Tabela gravada: %s -> %s", full_name, path)
 
 
-# ============================================================
-# Execução principal
-# ============================================================
-
 def main(spark: SparkSession, job_name: str) -> None:
     logger.info("Iniciando job: %s", job_name)
     start = time.perf_counter()
 
-    gold_por_servidor = read_gold_por_servidor(spark)
+    gold_por_servidor = prepare_gold_por_servidor(
+        read_table(spark, SOURCE_GOLD_TABLE)
+    )
 
-    hub_por_servidor = build_hub_analitico_por_servidor(gold_por_servidor)
-    controle_por_servidor = build_controle_inconformidades_por_servidor(hub_por_servidor)
+    dim_siglas = prepare_dim_siglas(
+        read_table(spark, DIM_SIGLAS_TABLE)
+    )
+
+    dim_produtos = prepare_dim_produtos(
+        read_table(spark, DIM_PRODUTOS_TABLE)
+    )
+
+    hub_por_servidor = build_hub_analitico_por_servidor(
+        gold_por_servidor,
+        dim_siglas,
+        dim_produtos,
+    )
+
+    controle_por_servidor = build_controle_inconformidades_por_servidor(
+        hub_por_servidor
+    )
 
     write_gold_table(spark, hub_por_servidor, GOLD_HUB_TABLE, GOLD_HUB_PATH)
     write_gold_table(spark, controle_por_servidor, GOLD_CONTROLE_TABLE, GOLD_CONTROLE_PATH)

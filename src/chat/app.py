@@ -46,16 +46,44 @@ st.set_page_config(
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
-def _default_sql(table: str) -> str:
-    """Gera o SQL padrão. Sem LIMIT quando default_limit está vazio."""
-    limit_val = str(_ath.get("default_limit", "")).strip()
-    limit_clause = f" LIMIT {limit_val}" if limit_val.isdigit() else ""
-    return f'SELECT * FROM "{_ath["database"]}"."{table}"{limit_clause};'
+def _default_sql(
+    table: str,
+    limit: int | None = None,
+    partition_col: str = "",
+    partitions: list | None = None,
+) -> str:
+    """Gera o SQL padrão aplicando filtro de partição e LIMIT quando informados."""
+    where = ""
+    if partition_col and partitions:
+        if len(partitions) == 1:
+            where = f" WHERE {partition_col} = '{partitions[0]}'"
+        else:
+            vals  = ", ".join(f"'{p}'" for p in partitions)
+            where = f" WHERE {partition_col} IN ({vals})"
+    limit_clause = f" LIMIT {limit}" if limit else ""
+    return f'SELECT * FROM "{_ath["database"]}"."{table}"{where}{limit_clause};'
 
 
-def _build_system_prompt(df: pd.DataFrame, table: str) -> str:
+def _build_system_prompt(df: pd.DataFrame, table: str, is_sample: bool = True) -> str:
     cols     = "\n".join(f"  - `{c}`" for c in df.columns)
     table_md = df.to_markdown(index=False) if not df.empty else "_(vazio)_"
+    n        = len(df)
+
+    if is_sample:
+        data_header    = f"## Dados carregados (amostra — {n} registros)"
+        data_directive = (
+            "- Os dados acima são uma **amostra** da tabela. "
+            "Se a pergunta exigir análise do dataset completo, informe claramente "
+            "e sugira uma query SQL específica para obtê-los no Athena."
+        )
+    else:
+        data_header    = f"## Dados carregados — dataset completo ({n} registros)"
+        data_directive = (
+            "- Os dados acima representam o **dataset completo** da tabela. "
+            "Responda diretamente com base neles. "
+            "**Não sugira queries SQL para obter mais dados** — eles já estão todos carregados."
+        )
+
     return f"""Você é um assistente analítico especializado em **obsolescência de servidores** do Itaú Unibanco.
 
 Você tem acesso a dados da tabela `{table}` no AWS Athena \
@@ -64,14 +92,14 @@ Você tem acesso a dados da tabela `{table}` no AWS Athena \
 ## Colunas disponíveis
 {cols}
 
-## Dados carregados
+{data_header}
 {table_md}
 
 **Diretrizes:**
 - Responda sempre em **português brasileiro**.
 - Baseie suas análises nos dados acima; não invente valores.
 - Use tabelas markdown e números formatados quando útil.
-- Se a pergunta exigir dados além da amostra carregada, informe claramente e sugira uma query SQL para obtê-los.
+{data_directive}
 - Seja objetivo, analítico e preciso.
 """
 
@@ -107,12 +135,15 @@ def _make_athena(region, s3_output, table, workgroup, aws_key, aws_secret, aws_t
 
 # ── Session state defaults ────────────────────────────────────────────────────
 _DEFAULTS: dict = {
-    "messages":         [],
-    "context":          [],
-    "df":               pd.DataFrame(),
-    "agent":            None,
-    "available_tables": [],          # lista de tabelas do Glue catalog
-    "selected_table":   _ath["table"],
+    "messages":            [],
+    "context":             [],
+    "df":                  pd.DataFrame(),
+    "agent":               None,
+    "available_tables":    [],
+    "selected_table":      _ath["table"],
+    "available_partitions": [],
+    "selected_partitions": [_ath["default_partition"]] if _ath.get("default_partition") else [],
+    "data_is_sample":      True,
 }
 for _k, _v in _DEFAULTS.items():
     st.session_state.setdefault(_k, _v)
@@ -143,7 +174,11 @@ with st.sidebar:
             try:
                 with st.spinner("Inicializando agente..."):
                     sys_prompt = (
-                        _build_system_prompt(st.session_state.df, st.session_state.selected_table)
+                        _build_system_prompt(
+                            st.session_state.df,
+                            st.session_state.selected_table,
+                            st.session_state.data_is_sample,
+                        )
                         if not st.session_state.df.empty else ""
                     )
                     st.session_state.agent = _make_agent(
@@ -152,7 +187,10 @@ with st.sidebar:
             except Exception as exc:
                 st.error(f"Erro ao conectar: {exc}")
 
-        st.success("✅ IA conectada") if st.session_state.agent else st.info("ℹ️ Clique em **Conectar IA**.")
+        if st.session_state.agent:
+            st.success("✅ IA conectada")
+        else:
+            st.info("ℹ️ Clique em **Conectar IA**.")
 
     # ── Athena ─────────────────────────────────────────────────────────────────
     with st.expander("☁️ AWS Athena", expanded=True):
@@ -172,37 +210,88 @@ with st.sidebar:
 
         st.divider()
 
-        # ── Seleção de tabela ──────────────────────────────────────────────────
+        # ── Tabela ─────────────────────────────────────────────────────────────
         if st.button("🔍 Listar Tabelas", use_container_width=True):
             try:
-                with st.spinner("Buscando tabelas no Glue Catalog..."):
+                with st.spinner("Buscando tabelas..."):
                     tmp = _make_athena(aws_region, s3_output.strip(), _ath["table"],
                                        workgroup, aws_key, aws_secret, aws_token, aws_profile)
-                    st.session_state.available_tables = tmp.list_tables()
+                    st.session_state.available_tables    = tmp.list_tables()
+                    st.session_state.available_partitions = []   # reset ao trocar de tabela
                 st.success(f"{len(st.session_state.available_tables)} tabelas encontradas.")
             except Exception as exc:
                 st.error(f"Erro ao listar tabelas: {exc}")
 
-        # Combobox — usa tabelas do Glue se já listadas, senão só o default do config
         table_options = st.session_state.available_tables or [_ath["table"]]
         current_table = st.session_state.selected_table
         default_idx   = table_options.index(current_table) if current_table in table_options else 0
-
-        selected_table = st.selectbox(
-            "Tabela",
-            table_options,
-            index=default_idx,
-            help="Clique em **Listar Tabelas** para carregar todas as tabelas do database.",
-        )
+        selected_table = st.selectbox("Tabela", table_options, index=default_idx,
+                             help="Clique em **Listar Tabelas** para carregar todas as tabelas.")
+        if selected_table != st.session_state.selected_table:
+            st.session_state.available_partitions  = []   # reset ao trocar de tabela
+            st.session_state.selected_partitions   = [_ath["default_partition"]]
         st.session_state.selected_table = selected_table
 
-        # SQL customizado — placeholder reflete a tabela selecionada
+        st.divider()
+
+        # ── Partições ──────────────────────────────────────────────────────────
+        partition_col = st.text_input("Coluna de partição", value=_ath["partition_col"],
+                            help="Nome da coluna de partição. env: ATHENA_PARTITION_COL")
+
+        if st.button("🔍 Listar Partições", use_container_width=True):
+            try:
+                with st.spinner("Buscando partições..."):
+                    tmp = _make_athena(aws_region, s3_output.strip(), selected_table,
+                                       workgroup, aws_key, aws_secret, aws_token, aws_profile)
+                    st.session_state.available_partitions = tmp.list_partitions()
+
+                found = len(st.session_state.available_partitions)
+                if found == 0 and _ath.get("default_partition"):
+                    st.success("1 partição encontrada (valor padrão do settings.toml).")
+                else:
+                    st.success(f"{found} partição(ões) encontrada(s).")
+            except Exception as exc:
+                st.error(f"Erro ao listar partições: {exc}")
+
+        part_options = st.session_state.available_partitions or [_ath["default_partition"]]
+        # Garante que os valores selecionados existam nas opções
+        prev_selected = [p for p in st.session_state.selected_partitions if p in part_options]
+        if not prev_selected and _ath["default_partition"] in part_options:
+            prev_selected = [_ath["default_partition"]]
+
+        selected_partitions = st.multiselect(
+            "Partições",
+            options=part_options,
+            default=prev_selected,
+            help="Clique em **Listar Partições** para carregar os valores disponíveis. "
+                 "Múltiplas seleções geram cláusula IN.",
+        )
+        st.session_state.selected_partitions = selected_partitions
+
+        st.divider()
+
+        # ── Limite de linhas ───────────────────────────────────────────────────
+        no_limit = st.checkbox("Sem limite (retornar todas as linhas)")
+        if no_limit:
+            row_limit = None
+        else:
+            row_limit = st.slider(
+                "Limite de linhas",
+                min_value=_ath["limit_min"],
+                max_value=_ath["limit_max"],
+                value=min(_ath["limit_default"], _ath["limit_max"]),
+                step=_ath["limit_min"],
+            )
+
+        st.divider()
+
+        # ── SQL e carga ────────────────────────────────────────────────────────
+        auto_sql = _default_sql(selected_table, row_limit, partition_col, selected_partitions or None)
         custom_sql = st.text_area(
             "SQL customizado (opcional)",
-            placeholder=_default_sql(selected_table),
+            placeholder=auto_sql,
             height=90,
-            help="Deixe em branco para usar a query padrão (com LIMIT do settings.toml, "
-                 "ou sem LIMIT se default_limit estiver vazio).",
+            help="Deixe em branco para usar o SQL gerado automaticamente com os filtros acima.",
         )
 
         if st.button("📊 Carregar Dados", use_container_width=True, type="primary"):
@@ -210,13 +299,40 @@ with st.sidebar:
                 with st.spinner("Consultando Athena..."):
                     athena = _make_athena(aws_region, s3_output.strip(), selected_table,
                                           workgroup, aws_key, aws_secret, aws_token, aws_profile)
-                    sql = custom_sql.strip() or _default_sql(selected_table)
-                    df  = athena.query(sql)
+                    sql = custom_sql.strip() or auto_sql
 
-                st.session_state.df = df
+                    try:
+                        df = athena.query(sql)
+                    except RuntimeError as exc:
+                        # Se a coluna de partição não existir na tabela, reprocessa sem o filtro
+                        _err = str(exc).lower()
+                        _using_partition = (
+                            not custom_sql.strip()
+                            and partition_col
+                            and selected_partitions
+                            and (
+                                "column" in _err
+                                or "cannot be resolved" in _err
+                                or partition_col.lower() in _err
+                            )
+                        )
+                        if _using_partition:
+                            sql_fallback = _default_sql(selected_table, row_limit, "", None)
+                            st.warning(
+                                f"⚠️ Coluna de partição **'{partition_col}'** não encontrada "
+                                f"na tabela — query refeita sem particionamento."
+                            )
+                            df = athena.query(sql_fallback)
+                        else:
+                            raise
+
+                st.session_state.df            = df
+                st.session_state.data_is_sample = row_limit is not None
 
                 if st.session_state.agent and not df.empty:
-                    st.session_state.agent.system_prompt = _build_system_prompt(df, selected_table)
+                    st.session_state.agent.system_prompt = _build_system_prompt(
+                        df, selected_table, row_limit is not None
+                    )
 
                 if df.empty:
                     st.warning("Query retornou zero registros.")
