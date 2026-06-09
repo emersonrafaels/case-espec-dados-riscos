@@ -1,0 +1,8 @@
+pandas
+loguru
+dynaconf
+streamlit
+boto3
+openai
+tabulate
+tomli; python_version < "3.11"

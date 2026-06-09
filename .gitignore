@@ -322,3 +322,7 @@ data/*.xlsx
 data/*.csv
 data/*.parquet
 data/*.txt
+
+# Configurações locais com credenciais — nunca commitar
+src/config/settings.toml
+.secrets.toml

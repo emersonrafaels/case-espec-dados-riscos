@@ -1,4 +1,0 @@
-CREATE OR REPLACE VIEW workspace_db_case_espec_dados_riscos.vw_ranking_risco_siglas AS
-SELECT *
-FROM workspace_db_case_espec_dados_riscos.gold_risco_tecnologico_por_sigla
-ORDER BY score_risco_operacional DESC;

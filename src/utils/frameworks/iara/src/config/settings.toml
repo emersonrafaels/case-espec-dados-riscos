@@ -1,0 +1,36 @@
+[default]
+
+[default.iara]
+environment = "dev"
+provider = "azure_openai"
+
+[default.iara.models]
+default_chat = "gpt-4.1-mini"
+default_embedding = "text-embedding-ada-002"
+default_temperature = 0.7
+default_top_p = 1.0
+default_frequency_penalty = 0.0
+default_presence_penalty = 0.0
+enable_polling = true
+stream = false
+
+[default.iara.chat]
+response_format = "text"
+
+# NEW (refactoring): Optional OpenAI provider settings.
+# Set provider = "openai" to use the official openai SDK outside the bank.
+# The api_key can also be supplied via the OPENAI_API_KEY environment variable
+# or as a constructor argument — this entry is left empty by default to avoid
+# storing credentials in version control.
+[default.openai]
+api_key = ""
+default_chat = "gpt-4.1-mini"
+default_embedding = "text-embedding-ada-002"
+
+[development]
+debug = true
+log_level = "DEBUG"
+
+[production]
+debug = false
+log_level = "INFO"
