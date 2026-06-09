@@ -32,13 +32,13 @@ client_secret = ""   # env: IARA_CLIENT_SECRET |  .secrets.toml [ia] client_secr
 # ── AWS Athena ────────────────────────────────────────────────────────────────
 [athena]
 region        = "us-east-1"
-s3_output     = "s3://workspace-db-case-espec-dados-riscos/athena-results/"           # s3://bucket/prefix/  |  env: ATHENA_S3_OUTPUT
+s3_output     = "s3://workspace-db-case-espec-dados-riscos/case-riscos/athena-results/"           # s3://bucket/prefix/  |  env: ATHENA_S3_OUTPUT
 workgroup     = "primary"    # workgroup do Athena; env: ATHENA_WORKGROUP
-database      = "workspace_db_case_espec_dados_riscos"
-table         = "gold_obsolescencia_por_servidor"
+database      = "workspace_db"
+table         = "case_riscos_gold_obsolescencia_por_servidor"
 
 # Partição
-partition_col     = "ano_mes"   # coluna de partição da tabela; env: ATHENA_PARTITION_COL
+partition_col     = "anomes"   # coluna de partição da tabela; env: ATHENA_PARTITION_COL
 default_partition = "202604"    # valor padrão exibido no seletor de partições
 
 # Limite de linhas

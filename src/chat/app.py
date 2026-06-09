@@ -20,6 +20,7 @@ iara_setup.setup()
 # ─────────────────────────────────────────────────────────────────────────────
 
 import pandas as pd
+import plotly.express as px
 import streamlit as st
 
 from athena_client import AthenaClient
@@ -64,20 +65,47 @@ def _default_sql(
     return f'SELECT * FROM "{_ath["database"]}"."{table}"{where}{limit_clause};'
 
 
+def _optimize_dtypes(df: pd.DataFrame) -> pd.DataFrame:
+    """Reduz uso de memória após carregar do Athena (todas as cols chegam como str)."""
+    for col in df.columns:
+        if df[col].dtype != object:
+            continue
+        converted = pd.to_numeric(df[col], errors="coerce")
+        if converted.notna().mean() > 0.9:
+            df[col] = converted
+            continue
+        if df[col].nunique() / max(len(df), 1) < 0.5:
+            df[col] = df[col].astype("category")
+    return df
+
+
+@st.cache_data(show_spinner=False, ttl=3600)
+def _cached_query(_athena: AthenaClient, sql: str) -> pd.DataFrame:
+    """Executa e cacheia query Athena por 1 h (chave de cache = SQL)."""
+    return _athena.query(sql)
+
+
+_PROMPT_MAX_ROWS = 300
+
+
 def _build_system_prompt(df: pd.DataFrame, table: str, is_sample: bool = True) -> str:
-    cols     = "\n".join(f"  - `{c}`" for c in df.columns)
-    table_md = df.to_markdown(index=False) if not df.empty else "_(vazio)_"
-    n        = len(df)
+    n    = len(df)
+    cols = "\n".join(f"  - `{c}` ({df[c].dtype})" for c in df.columns)
+
+    # Limit literal rows sent to the LLM — avoids token explosion with large datasets
+    sample    = df.head(_PROMPT_MAX_ROWS)
+    sample_md = sample.to_markdown(index=False) if not sample.empty else "_(vazio)_"
+    stats_md  = df.describe(include="all").fillna("").to_markdown() if not df.empty else ""
 
     if is_sample:
-        data_header    = f"## Dados carregados (amostra — {n} registros)"
+        data_header    = f"## Dados carregados (amostra — {n:,} registros)"
         data_directive = (
             "- Os dados acima são uma **amostra** da tabela. "
             "Se a pergunta exigir análise do dataset completo, informe claramente "
             "e sugira uma query SQL específica para obtê-los no Athena."
         )
     else:
-        data_header    = f"## Dados carregados — dataset completo ({n} registros)"
+        data_header    = f"## Dados carregados — dataset completo ({n:,} registros)"
         data_directive = (
             "- Os dados acima representam o **dataset completo** da tabela. "
             "Responda diretamente com base neles. "
@@ -93,11 +121,16 @@ Você tem acesso a dados da tabela `{table}` no AWS Athena \
 {cols}
 
 {data_header}
-{table_md}
+> Exibindo os primeiros {min(n, _PROMPT_MAX_ROWS):,} registros como contexto.
+
+{sample_md}
+
+## Resumo estatístico
+{stats_md}
 
 **Diretrizes:**
 - Responda sempre em **português brasileiro**.
-- Baseie suas análises nos dados acima; não invente valores.
+- Baseie suas análises nos dados e no resumo estatístico acima; não invente valores.
 - Use tabelas markdown e números formatados quando útil.
 {data_directive}
 - Seja objetivo, analítico e preciso.
@@ -132,6 +165,114 @@ def _make_athena(region, s3_output, table, workgroup, aws_key, aws_secret, aws_t
         aws_session_token=aws_token or None,
         profile_name=aws_profile or None,
     )
+
+
+def _render_charts(df: pd.DataFrame) -> None:
+    """Gera graficos interativos com Plotly baseados nos dados carregados."""
+    if df.empty:
+        st.info("Nenhum dado disponivel para visualizacao.")
+        return
+
+    cat_cols = [
+        c for c in df.columns
+        if str(df[c].dtype) in ("category", "object") and 1 < df[c].nunique() <= 100
+    ]
+    num_cols = df.select_dtypes(include="number").columns.tolist()
+
+    ctrl_col, chart_col = st.columns([1, 3])
+
+    with ctrl_col:
+        chart_type = st.selectbox(
+            "Tipo de grafico",
+            ["Barras", "Histograma", "Pizza", "Dispersao", "Boxplot"],
+            key="chart_type",
+        )
+
+    with chart_col:
+        if chart_type == "Barras":
+            if not cat_cols:
+                st.warning("Nenhuma coluna categorica encontrada (max 100 valores unicos).")
+                return
+            col   = st.selectbox("Coluna", cat_cols, key="bar_col")
+            top_n = st.slider("Top N valores", 5, 50, 15, key="bar_n")
+            vc    = df[col].value_counts().head(top_n).reset_index()
+            vc.columns = [col, "Quantidade"]
+            fig = px.bar(
+                vc, x=col, y="Quantidade",
+                title=f"Top {top_n} — {col}",
+                text_auto=True,
+                color="Quantidade",
+                color_continuous_scale="Blues",
+            )
+            fig.update_layout(xaxis_tickangle=-35, showlegend=False)
+            st.plotly_chart(fig, use_container_width=True)
+
+        elif chart_type == "Histograma":
+            if not num_cols:
+                st.warning("Nenhuma coluna numerica encontrada.")
+                return
+            col  = st.selectbox("Coluna", num_cols, key="hist_col")
+            bins = st.slider("Bins", 10, 100, 30, key="hist_bins")
+            color_col = st.selectbox("Cor (opcional)", ["—"] + cat_cols, key="hist_color")
+            fig = px.histogram(
+                df, x=col, nbins=bins,
+                color=color_col if color_col != "—" else None,
+                title=f"Distribuicao — {col}",
+                barmode="overlay",
+                opacity=0.75,
+            )
+            st.plotly_chart(fig, use_container_width=True)
+
+        elif chart_type == "Pizza":
+            if not cat_cols:
+                st.warning("Nenhuma coluna categorica encontrada.")
+                return
+            col   = st.selectbox("Coluna", cat_cols, key="pie_col")
+            top_n = st.slider("Top N valores", 3, 20, 8, key="pie_n")
+            vc    = df[col].value_counts().head(top_n)
+            fig   = px.pie(
+                values=vc.values, names=vc.index,
+                title=f"Distribuicao — {col}",
+                hole=0.35,
+            )
+            fig.update_traces(textposition="inside", textinfo="percent+label")
+            st.plotly_chart(fig, use_container_width=True)
+
+        elif chart_type == "Dispersao":
+            if len(num_cols) < 2:
+                st.warning("Sao necessarias ao menos 2 colunas numericas.")
+                return
+            c1, c2, c3 = st.columns(3)
+            x_col     = c1.selectbox("Eixo X", num_cols, key="sc_x")
+            y_col     = c2.selectbox("Eixo Y", num_cols, index=min(1, len(num_cols) - 1), key="sc_y")
+            color_col = c3.selectbox("Cor (opcional)", ["—"] + cat_cols, key="sc_color")
+            # Sample for performance: scatter with 500k points is slow
+            plot_df = df.sample(min(10_000, len(df)), random_state=42) if len(df) > 10_000 else df
+            if len(df) > 10_000:
+                st.caption(f"Dispersao: amostra de 10.000 de {len(df):,} pontos.")
+            fig = px.scatter(
+                plot_df, x=x_col, y=y_col,
+                color=color_col if color_col != "—" else None,
+                title=f"{x_col} x {y_col}",
+                opacity=0.5,
+                render_mode="webgl",
+            )
+            st.plotly_chart(fig, use_container_width=True)
+
+        elif chart_type == "Boxplot":
+            if not num_cols:
+                st.warning("Nenhuma coluna numerica encontrada.")
+                return
+            c1, c2 = st.columns(2)
+            y_col = c1.selectbox("Valor (Y)", num_cols, key="box_y")
+            x_col = c2.selectbox("Grupo (X — opcional)", ["—"] + cat_cols, key="box_x")
+            fig = px.box(
+                df, y=y_col,
+                x=x_col if x_col != "—" else None,
+                title=f"Boxplot — {y_col}",
+                points=False,
+            )
+            st.plotly_chart(fig, use_container_width=True)
 
 
 # ── Session state defaults ────────────────────────────────────────────────────
@@ -303,7 +444,7 @@ with st.sidebar:
                     sql = custom_sql.strip() or auto_sql
 
                     try:
-                        df = athena.query(sql)
+                        df = _cached_query(athena, sql)
                     except RuntimeError as exc:
                         # Se a coluna de partição não existir na tabela, reprocessa sem o filtro
                         _err = str(exc).lower()
@@ -323,10 +464,11 @@ with st.sidebar:
                                 f"⚠️ Coluna de partição **'{partition_col}'** não encontrada "
                                 f"na tabela — query refeita sem particionamento."
                             )
-                            df = athena.query(sql_fallback)
+                            df = _cached_query(athena, sql_fallback)
                         else:
                             raise
 
+                df = _optimize_dtypes(df)
                 st.session_state.df            = df
                 st.session_state.data_is_sample = row_limit is not None
 
@@ -338,7 +480,7 @@ with st.sidebar:
                 if df.empty:
                     st.warning("Query retornou zero registros.")
                 else:
-                    st.success(f"✅ {len(df)} linhas × {len(df.columns)} colunas carregadas")
+                    st.success(f"✅ {len(df):,} linhas × {len(df.columns)} colunas carregadas")
             except Exception as exc:
                 st.error(f"Erro Athena: {exc}")
 
@@ -366,7 +508,7 @@ with c1:
     st.metric("Agente IA", "✅ Conectado" if st.session_state.agent else "⚠️ Desconectado")
 with c2:
     data_ok = not st.session_state.df.empty
-    st.metric("Dados carregados", f"{len(st.session_state.df)} registros" if data_ok else "⚠️ Nenhum")
+    st.metric("Dados carregados", f"{len(st.session_state.df):,} registros" if data_ok else "⚠️ Nenhum")
 with c3:
     n_turns = sum(1 for m in st.session_state.messages if m["role"] == "user")
     st.metric("Perguntas realizadas", str(n_turns))
@@ -377,14 +519,19 @@ st.divider()
 if not st.session_state.df.empty:
     df = st.session_state.df
     with st.expander(
-        f"📋 [{st.session_state.selected_table}] — {len(df)} linhas × {len(df.columns)} colunas",
+        f"📋 [{st.session_state.selected_table}] — {len(df):,} linhas × {len(df.columns)} colunas",
         expanded=False,
     ):
         st.dataframe(df, use_container_width=True, hide_index=True)
         numeric_cols = df.select_dtypes(include="number").columns
         if len(numeric_cols):
-            st.caption("Estatísticas numéricas:")
+            st.caption("Estatisticas numericas:")
             st.dataframe(df[numeric_cols].describe(), use_container_width=True)
+
+    # ── Charts ────────────────────────────────────────────────────────────────
+    with st.expander("📊 Graficos", expanded=False):
+        _render_charts(df)
+
 else:
     st.info(
         "👈 **Passo 1:** Configure o agente de IA e clique em **Conectar IA**.  \n"
