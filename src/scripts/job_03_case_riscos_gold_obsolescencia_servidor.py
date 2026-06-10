@@ -207,11 +207,7 @@ def build_gold_por_servidor(
         )
         .join(
             relacionamentos.alias("rel"),
-            (F.col("srv.sigla_join") == F.col("rel.sigla_join"))
-            & (
-                (F.col("cat.name_join") == F.col("rel.produto_join"))
-                | (F.col("inst.software_join") == F.col("rel.produto_join"))
-            ),
+            F.col("cat.model_join") == F.col("rel.produto_join"),
             how="left",
         )
         .select(
